@@ -360,10 +360,70 @@
   <data name="AboutSponsor.Text" xml:space="preserve">
     <value>Sponsor</value>
   </data>
+  <data name="SSHKeySetting.Text" xml:space="preserve">
+    <value>SSH Keys</value>
+  </data>
+  <data name="ManageSSHKeysSetting.Text" xml:space="preserve">
+    <value>Manage Built-in SSH Keys</value>
+  </data>
+  <data name="ManageSSHKeysButton.Content" xml:space="preserve">
+    <value>Manage</value>
+  </data>
+  <data name="ManageSSHKeysDialogTitle.Text" xml:space="preserve">
+    <value>SSH Key Management</value>
+  </data>
+  <data name="EmptySSHKeyTips.Text" xml:space="preserve">
+    <value>No SSH keys imported yet.</value>
+  </data>
+  <data name="ImportSSHKeyButton.Content" xml:space="preserve">
+    <value>Import Key</value>
+  </data>
+  <data name="PasteSSHKeyButton.Content" xml:space="preserve">
+    <value>Paste Key</value>
+  </data>
+  <data name="PasteSSHKeyConfirmButton.Content" xml:space="preserve">
+    <value>Confirm</value>
+  </data>
+  <data name="DeleteSSHKeyButton.Content" xml:space="preserve">
+    <value>Delete Key</value>
+  </data>
+  <data name="SSHKeyNameTextBox.Header" xml:space="preserve">
+    <value>Key Name</value>
+  </data>
+  <data name="SSHKeyNameTextBox.PlaceholderText" xml:space="preserve">
+    <value>Leave blank to use the key comment</value>
+  </data>
+  <data name="SSHPrivateKeyTextBox.Header" xml:space="preserve">
+    <value>Private Key</value>
+  </data>
+  <data name="SSHPrivateKeyTextBox.PlaceholderText" xml:space="preserve">
+    <value>-----BEGIN OPENSSH PRIVATE KEY-----</value>
+  </data>
+  <data name="PasteSSHKeyError" xml:space="preserve">
+    <value>Could not parse SSH private key: {0}</value>
+  </data>
+  <data name="SSHKeyTips1.Text" xml:space="preserve">
+    <value>Private keys are imported into the app's built-in key store, so SSH no longer depends on the original file path.</value>
+  </data>
+  <data name="SSHKeyTips2.Text" xml:space="preserve">
+    <value>Key content is encrypted using the current Windows user's data protection scope.</value>
+  </data>
   <data name="AboutAliPay.Content" xml:space="preserve">
     <value>Alipay</value>
   </data>
   <data name="AboutWePay.Content" xml:space="preserve">
     <value>WeChat</value>
+  </data>
+  <data name="LogSetting.Text" xml:space="preserve">
+    <value>Log</value>
+  </data>
+  <data name="OpenLogFolderSetting.Text" xml:space="preserve">
+    <value>Log files</value>
+  </data>
+  <data name="OpenLogFolderButton.Content" xml:space="preserve">
+    <value>Open Folder</value>
+  </data>
+  <data name="ClearLogButton.Content" xml:space="preserve">
+    <value>Clear</value>
   </data>
 </root>

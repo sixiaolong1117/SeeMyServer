@@ -4,6 +4,7 @@ using Newtonsoft.Json.Linq;
 using PInvoke;
 using Renci.SshNet;
 using Renci.SshNet.Security;
+using SeeMyServer.Datas;
 using SeeMyServer.Helper;
 using SeeMyServer.Models;
 using System;
@@ -45,8 +46,10 @@ namespace SeeMyServer.Methods
                 }
 
                 bool usePrivateKey = string.Equals(cmsModel.SSHKeyIsOpen, "True", StringComparison.OrdinalIgnoreCase);
+                // 优先使用数据库中的SSHKeyId，其次使用文件路径
+                string sshKey = !string.IsNullOrEmpty(cmsModel.SSHKeyId) ? cmsModel.SSHKeyId : cmsModel.SSHKey;
                 // 注意使用传入的passwd，Model中的Passwd是加密后的结果
-                using (SshClient sshClient = InitializeSshClient(cmsModel.HostIP, port, cmsModel.SSHUser, passwd, cmsModel.SSHKey, usePrivateKey))
+                using (SshClient sshClient = InitializeSshClient(cmsModel.HostIP, port, cmsModel.SSHUser, passwd, sshKey, usePrivateKey))
                 {
                     if (sshClient == null)
                     {
@@ -71,7 +74,7 @@ namespace SeeMyServer.Methods
             {
                 if (usePrivateKey)
                 {
-                    PrivateKeyFile privateKeyFile = new PrivateKeyFile(sshKey);
+                    PrivateKeyFile privateKeyFile = LoadPrivateKeyFile(sshKey);
                     ConnectionInfo connectionInfo = new ConnectionInfo(sshHost, sshPort, sshUser, new PrivateKeyAuthenticationMethod(sshUser, new PrivateKeyFile[] { privateKeyFile }));
                     connectionInfo.Encoding = Encoding.UTF8;
                     // 设置连接超时时间
@@ -89,6 +92,29 @@ namespace SeeMyServer.Methods
             {
                 logger.LogError($"{sshHost}:{sshPort} SSH 连接失败：" + ex.Message);
                 return null;
+            }
+        }
+
+        /// <summary>
+        /// 根据SSHKey参数加载私钥（支持文件路径和数据库ID两种方式）
+        /// </summary>
+        private static PrivateKeyFile LoadPrivateKeyFile(string sshKey)
+        {
+            // 尝试作为数据库SSHKeyId加载（纯数字）
+            if (int.TryParse(sshKey, out int keyId))
+            {
+                string privateKeyContent = SSHKeyMethod.LoadPrivateKeyFromDB(sshKey);
+                return new PrivateKeyFile(new MemoryStream(Encoding.UTF8.GetBytes(privateKeyContent)));
+            }
+            // 尝试作为私钥内容加载（以"-----BEGIN"开头）
+            else if (sshKey.TrimStart().StartsWith("-----BEGIN"))
+            {
+                return new PrivateKeyFile(new MemoryStream(Encoding.UTF8.GetBytes(sshKey)));
+            }
+            // 否则作为文件路径加载
+            else
+            {
+                return new PrivateKeyFile(sshKey);
             }
         }
 
@@ -1216,7 +1242,8 @@ namespace SeeMyServer.Methods
             // 命令
             if (cmsModel.SSHKeyIsOpen == "True")
             {
-                process.StartInfo.Arguments = $"-NoExit ssh -i {cmsModel.SSHKey} {cmsModel.SSHUser}@{cmsModel.HostIP} -p {cmsModel.HostPort}";
+                string keyPath = GetSSHKeyFilePath(cmsModel);
+                process.StartInfo.Arguments = $"-NoExit ssh -i \"{keyPath}\" {cmsModel.SSHUser}@{cmsModel.HostIP} -p {cmsModel.HostPort}";
             }
             else
             {
@@ -1232,6 +1259,52 @@ namespace SeeMyServer.Methods
             //process.WaitForExit();
             // 进程关闭
             process.Close();
+        }
+
+        /// <summary>
+        /// 根据CMSModel获取SSH密钥文件路径（优先从数据库读取并写入临时文件）
+        /// </summary>
+        public static string GetSSHKeyFilePath(CMSModel cmsModel)
+        {
+            // 优先使用SSHKeyId从数据库读取
+            if (!string.IsNullOrEmpty(cmsModel.SSHKeyId) && int.TryParse(cmsModel.SSHKeyId, out int keyId))
+            {
+                string privateKeyContent = SSHKeyMethod.LoadPrivateKeyFromDB(cmsModel.SSHKeyId);
+                if (!string.IsNullOrEmpty(privateKeyContent))
+                {
+                    string tempKeyPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"SeeMyServer_SSHKey_{keyId}");
+                    File.WriteAllText(tempKeyPath, privateKeyContent);
+                    return tempKeyPath;
+                }
+            }
+
+            // 回退：尝试将SSHKey作为文件路径使用（兼容旧数据）
+            if (!string.IsNullOrEmpty(cmsModel.SSHKey) && File.Exists(cmsModel.SSHKey))
+            {
+                return cmsModel.SSHKey;
+            }
+
+            // 回退：尝试将SSHKey作为私钥内容，写入临时文件
+            if (!string.IsNullOrEmpty(cmsModel.SSHKey) && cmsModel.SSHKey.TrimStart().StartsWith("-----BEGIN"))
+            {
+                string tempKeyPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"SeeMyServer_SSHKey_{Guid.NewGuid():N}");
+                File.WriteAllText(tempKeyPath, cmsModel.SSHKey);
+                return tempKeyPath;
+            }
+
+            // 最后回退：尝试将SSHKey作为ID从数据库加载
+            if (int.TryParse(cmsModel.SSHKey, out int legacyKeyId))
+            {
+                string privateKeyContent = SSHKeyMethod.LoadPrivateKeyFromDB(legacyKeyId.ToString());
+                if (!string.IsNullOrEmpty(privateKeyContent))
+                {
+                    string tempKeyPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"SeeMyServer_SSHKey_{legacyKeyId}");
+                    File.WriteAllText(tempKeyPath, privateKeyContent);
+                    return tempKeyPath;
+                }
+            }
+
+            return cmsModel.SSHKey ?? "";
         }
     }
 }

@@ -112,6 +112,21 @@ namespace SeeMyServer.Helper
             return DateTime.Now.ToString("[yyyy-MM-dd HH:mm:ss]");
         }
 
+        public void ClearLog()
+        {
+            try
+            {
+                if (File.Exists(logFilePath))
+                {
+                    File.WriteAllText(logFilePath, "[INFO] " + GetTimestamp() + " Log cleared." + Environment.NewLine);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Failed to clear log: " + ex.Message);
+            }
+        }
+
         public void OpenLogFileDirectory()
         {
             string logFileDirectory = Path.GetDirectoryName(logFilePath);

@@ -49,6 +49,7 @@ namespace SeeMyServer.Models
         public string SSHUser { get; set; }
         public string SSHPasswd { get; set; }
         public string SSHKey { get; set; }
+        public string SSHKeyId { get; set; }
         public string OSType { get; set; }
         public string SSHKeyIsOpen { get; set; }
         public int NumberOfFailures
@@ -491,7 +492,7 @@ namespace SeeMyServer.Models
             }
         }
 
-        // ÎªÃ¿¸öCMSModelÌí¼ÓÒ»¸öĞÅºÅÁ¿£¬³õÊ¼»¯Îª1£¬±íÊ¾Ò»´ÎÖ»ÔÊĞíÒ»¸öÏß³Ì½øÈë
+        // ä¸ºæ¯ä¸ªCMSModelæ·»åŠ ä¸€ä¸ªä¿¡å·é‡ï¼Œåˆå§‹åŒ–ä¸º1ï¼Œè¡¨ç¤ºä¸€æ¬¡åªå…è®¸ä¸€ä¸ªçº¿ç¨‹è¿›å…¥
         public SemaphoreSlim UpdateSemaphore { get; } = new SemaphoreSlim(1, 1);
 
         public List<MountInfo> MountInfos

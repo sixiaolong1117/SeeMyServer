@@ -1,9 +1,12 @@
-﻿using Microsoft.UI.Xaml.Controls;
+﻿using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using System;
 using System.Collections.Generic;
 using Windows.ApplicationModel.Resources;
 using Windows.Globalization;
 using Windows.Storage;
+using SeeMyServer.Pages.Dialogs;
+using SeeMyServer.Helper;
 
 namespace SeeMyServer.Pages
 {
@@ -194,6 +197,27 @@ namespace SeeMyServer.Pages
                 // 保存选中的序号到 LocalSettings
                 localSettings.Values["LosesFocusStopSSHSelectedIndex"] = LosesFocusStopSSHComboBox.SelectedIndex;
             }
+        }
+
+        private async void ManageSSHKeysButton_Click(object sender, RoutedEventArgs e)
+        {
+            ManageSSHKeys dialog = new ManageSSHKeys();
+            dialog.XamlRoot = this.XamlRoot;
+            dialog.Style = Application.Current.Resources["DefaultContentDialogStyle"] as Style;
+            dialog.CloseButtonText = resourceLoader.GetString("Cancel");
+            await dialog.ShowAsync();
+        }
+
+        private void OpenLogFolderButton_Click(object sender, RoutedEventArgs e)
+        {
+            Logger logger = new Logger(1);
+            logger.OpenLogFileDirectory();
+        }
+
+        private void ClearLogButton_Click(object sender, RoutedEventArgs e)
+        {
+            Logger logger = new Logger(1);
+            logger.ClearLog();
         }
     }
 }

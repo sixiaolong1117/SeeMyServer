@@ -1,15 +1,14 @@
 ﻿using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using SeeMyServer.Datas;
 using SeeMyServer.Helper;
 using SeeMyServer.Methods;
 using SeeMyServer.Models;
 using System;
+using System.Collections.Generic;
 using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
+using Windows.ApplicationModel.Resources;
 using Windows.Storage;
-using Windows.Storage.Pickers;
-using System.IO;
 
 
 namespace SeeMyServer.Pages.Dialogs
@@ -20,6 +19,8 @@ namespace SeeMyServer.Pages.Dialogs
         ApplicationDataContainer localSettings = ApplicationData.Current.LocalSettings;
         public CMSModel CMSData { get; private set; }
         public CMSModel IncomingData { get; private set; }
+        private readonly ResourceLoader resourceLoader = ResourceLoader.GetForViewIndependentUse();
+        private List<SSHKeyModel> sshKeys = new List<SSHKeyModel>();
         private Logger logger;
         public AddServer(CMSModel cmsModel)
         {
@@ -52,17 +53,8 @@ namespace SeeMyServer.Pages.Dialogs
             }
             logger.LogInfo("Dialog field initialization completed.");
 
-            if (cmsModel.SSHKey == "" || cmsModel.SSHKey == null)
-            {
-                string userFolderPath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-                string logFolder = Path.Combine(userFolderPath, ".ssh");
-                string logFilePath = Path.Combine(logFolder, "id_rsa");
-                SSHKeyTextBox.Text = logFilePath;
-            }
-            else
-            {
-                SSHKeyTextBox.Text = cmsModel.SSHKey;
-            }
+            // 加载SSH密钥列表
+            LoadSSHKeys(GetConfiguredSSHKeyId(cmsModel));
 
             // 添加操作系统类型
             OSTypeComboBox.Items.Add("Linux");
@@ -93,7 +85,8 @@ namespace SeeMyServer.Pages.Dialogs
             if (SSHKeyOrPasswdToggleSwitch.IsOn == true)
             {
                 CMSData.SSHKeyIsOpen = "True";
-                CMSData.SSHKey = SSHKeyTextBox.Text;
+                CMSData.SSHKeyId = GetSelectedSSHKeyId();
+                CMSData.SSHKey = "";
                 CMSData.SSHPasswd = null;
             }
             else
@@ -128,6 +121,7 @@ namespace SeeMyServer.Pages.Dialogs
                     string encrypted = Method.EncryptString(SSHPasswd.Password, symmetricAlgorithm);
 
                     CMSData.SSHPasswd = encrypted;
+                    CMSData.SSHKeyId = "";
                     CMSData.SSHKey = null;
                 }
             }
@@ -149,35 +143,7 @@ namespace SeeMyServer.Pages.Dialogs
         {
             // 在"取消"按钮点击事件中不做任何操作
         }
-        private async void SelectSSHKeyPath_Click(object sender, RoutedEventArgs e)
-        {
-            // 创建一个FileOpenPicker
-            var openPicker = new FileOpenPicker();
-            // 获取当前窗口句柄 (HWND) 
-            var hWnd = WinRT.Interop.WindowNative.GetWindowHandle(App.m_window);
-            // 使用窗口句柄 (HWND) 初始化FileOpenPicker
-            WinRT.Interop.InitializeWithWindow.Initialize(openPicker, hWnd);
 
-            // 为FilePicker设置选项
-            openPicker.ViewMode = PickerViewMode.Thumbnail;
-            // 建议打开位置 桌面
-            openPicker.SuggestedStartLocation = PickerLocationId.Desktop;
-            // 文件类型过滤器
-            openPicker.FileTypeFilter.Add("*");
-
-            // 打开选择器供用户选择文件
-            var file = await openPicker.PickSingleFileAsync();
-            string filePath = null;
-            if (file != null)
-            {
-                filePath = file.Path;
-            }
-            else
-            {
-                filePath = null;
-            }
-            SSHKeyTextBox.Text = filePath;
-        }
         private void privateKeyIsOpen_Toggled(object sender, RoutedEventArgs e)
         {
             PrivateKeyIsOpen();
@@ -188,7 +154,7 @@ namespace SeeMyServer.Pages.Dialogs
             {
                 AddSSHKey.Visibility = Visibility.Visible;
                 AddSSHPasswd.Visibility = Visibility.Collapsed;
-                SSHKeyTips.Visibility = Visibility.Visible;
+                SSHKeyTips.Visibility = Visibility.Collapsed;
                 SSHPasswdTips.Visibility = Visibility.Collapsed;
             }
             else
@@ -199,6 +165,86 @@ namespace SeeMyServer.Pages.Dialogs
                 SSHPasswdTips.Visibility = Visibility.Visible;
             }
             logger.LogInfo("PrivateKeyIsOpen() completed.");
+        }
+
+        private async void ImportSSHKey_Click(object sender, RoutedEventArgs e)
+        {
+            int? sshKeyId = await SSHKeyMethod.ImportKey();
+            if (sshKeyId != null)
+            {
+                LoadSSHKeys(sshKeyId.Value.ToString());
+            }
+        }
+
+        private void ConfirmPasteSSHKey_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                int sshKeyId = SSHKeyMethod.SavePrivateKey(SSHKeyNameTextBox.Text, SSHPrivateKeyTextBox.Text);
+                SSHKeyNameTextBox.Text = "";
+                SSHPrivateKeyTextBox.Text = "";
+                PasteSSHKeyError.Visibility = Visibility.Collapsed;
+                PasteSSHKeyFlyout.Hide();
+                LoadSSHKeys(sshKeyId.ToString());
+            }
+            catch (Exception ex)
+            {
+                PasteSSHKeyError.Text = string.Format(resourceLoader.GetString("PasteSSHKeyError"), ex.Message);
+                PasteSSHKeyError.Visibility = Visibility.Visible;
+            }
+        }
+
+        private void DeleteSSHKey_Click(object sender, RoutedEventArgs e)
+        {
+            if (SSHKeyComboBox.SelectedItem is SSHKeyModel selectedKey)
+            {
+                SQLiteHelper dbHelper = new SQLiteHelper();
+                dbHelper.DeleteSSHKey(selectedKey.Id);
+                LoadSSHKeys("");
+            }
+        }
+
+        private void SSHKeyComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            DeleteSSHKeyButton.IsEnabled = SSHKeyComboBox.SelectedItem != null;
+        }
+
+        private void LoadSSHKeys(string selectedSSHKeyId)
+        {
+            SQLiteHelper dbHelper = new SQLiteHelper();
+            sshKeys = dbHelper.QuerySSHKeys();
+            SSHKeyComboBox.ItemsSource = sshKeys;
+            SSHKeyComboBox.SelectedItem = null;
+
+            foreach (SSHKeyModel sshKey in sshKeys)
+            {
+                if (sshKey.Id.ToString() == selectedSSHKeyId)
+                {
+                    SSHKeyComboBox.SelectedItem = sshKey;
+                    break;
+                }
+            }
+
+            DeleteSSHKeyButton.IsEnabled = SSHKeyComboBox.SelectedItem != null;
+        }
+
+        private string GetSelectedSSHKeyId()
+        {
+            if (SSHKeyComboBox.SelectedItem is SSHKeyModel selectedKey)
+            {
+                return selectedKey.Id.ToString();
+            }
+            return "";
+        }
+
+        private string GetConfiguredSSHKeyId(CMSModel cmsModel)
+        {
+            if (!string.IsNullOrEmpty(cmsModel.SSHKeyId))
+            {
+                return cmsModel.SSHKeyId;
+            }
+
+            return int.TryParse(cmsModel.SSHKey, out _) ? cmsModel.SSHKey : "";
         }
     }
 }
