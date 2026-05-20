@@ -94,13 +94,16 @@ namespace SeeMyServer.Pages
                     backgroundMaterial.SelectedItem = material[0];
                     break;
                 case "Mica Alt":
-                default:
                     localSettings.Values["materialStatus"] = "Mica Alt";
                     backgroundMaterial.SelectedItem = material[1];
                     break;
                 case "Acrylic":
                     localSettings.Values["materialStatus"] = "Acrylic";
                     backgroundMaterial.SelectedItem = material[2];
+                    break;
+                default:
+                    localSettings.Values["materialStatus"] = "Mica Alt";
+                    backgroundMaterial.SelectedItem = material[1];
                     break;
             }
         }

@@ -133,39 +133,41 @@ namespace SeeMyServer.Methods
             return results.ToArray();
         }
 
+        /// <summary>
+        /// 解密SSH密码
+        /// </summary>
+        private static string DecryptSSHPassword(CMSModel cmsModel)
+        {
+            if (string.IsNullOrEmpty(cmsModel.SSHPasswd))
+                return "";
+
+            string key = LoadKeyFromLocalSettings();
+            string iv = LoadIVFromLocalSettings();
+
+            if (string.IsNullOrEmpty(key) || string.IsNullOrEmpty(iv))
+            {
+                logger.LogError($"{cmsModel.HostIP}:{cmsModel.HostPort} The key and/or initialization vector do not exist.");
+                return "";
+            }
+
+            using (SymmetricAlgorithm symmetricAlgorithm = Aes.Create())
+            {
+                symmetricAlgorithm.Key = Convert.FromBase64String(key);
+                symmetricAlgorithm.IV = Convert.FromBase64String(iv);
+                return DecryptString(cmsModel.SSHPasswd, symmetricAlgorithm);
+            }
+        }
+
         private static async Task<string[]> SendSSHCommandAsync(string[] commands, CMSModel cmsModel)
         {
             string passwd = "";
             // 没有打开Key认证
             if (cmsModel.SSHKeyIsOpen != "True")
             {
-                // 如果SSH密码不为空
-                if (cmsModel.SSHPasswd != "" && cmsModel.SSHPasswd != null)
+                if (!string.IsNullOrEmpty(cmsModel.SSHPasswd))
                 {
                     logger.LogInfo($"{cmsModel.HostIP}:{cmsModel.HostPort} SSH using Password.");
-                    // 检查是否已经存在密钥和初始化向量，如果不存在则抛出异常
-                    string key = Method.LoadKeyFromLocalSettings();
-                    string iv = Method.LoadIVFromLocalSettings();
-
-                    // 如果密钥和初始化向量为空
-                    if (string.IsNullOrEmpty(key) || string.IsNullOrEmpty(iv))
-                    {
-                        // 错误：密钥和/或初始化向量不存在
-                        logger.LogError($"{cmsModel.HostIP}:{cmsModel.HostPort} The key and/or initialization vector do not exist, please set the key and initialization vector first.");
-                    }
-                    // 如果密钥和初始化向量存在
-                    else
-                    {
-                        // 使用的对称加密算法
-                        SymmetricAlgorithm symmetricAlgorithm = new AesManaged();
-
-                        // 设置加密密钥和初始化向量
-                        symmetricAlgorithm.Key = Convert.FromBase64String(key);
-                        symmetricAlgorithm.IV = Convert.FromBase64String(iv);
-
-                        // 解密密码
-                        passwd = Method.DecryptString(cmsModel.SSHPasswd, symmetricAlgorithm);
-                    }
+                    passwd = DecryptSSHPassword(cmsModel);
                 }
             }
             // 打开Key认证
@@ -740,6 +742,149 @@ namespace SeeMyServer.Methods
             }
         }
 
+        /// <summary>
+        /// 更新 CMSModel 的监控数据（CPU、内存、网络、磁盘等）
+        /// 此方法提取自 HomePage 和 DetailPage 的重复逻辑
+        /// </summary>
+        public static void UpdateCMSModelFromUsageResult(
+            CMSModel cmsModel,
+            Tuple<List<List<string>>, List<string>, List<NetworkInterfaceInfo>, List<List<MountInfo>>, List<string>, List<string>> Usages,
+            Logger logger)
+        {
+            if (Usages == null) return;
+
+            var cpuUsages = Usages.Item1;
+            var memUsages = Usages.Item2;
+            var NetworkInterfaceInfos = Usages.Item3;
+            var MountInfos = Usages.Item4[0];
+            var DiskStatus = Usages.Item4[1];
+            var UpTime = Usages.Item5[0];
+            var HostName = Usages.Item5[1];
+            var CPUCoreNum = Usages.Item5[2];
+            var PRETTY_NAME = Usages.Item5[3];
+            var TOPRec = Usages.Item5[4];
+            var LinuxKernelVersion = Usages.Item5[5];
+            var loadAverage = Usages.Item6;
+
+            // 只有HostName和OSRelease为空才更新
+            if (string.IsNullOrEmpty(cmsModel.HostName))
+                cmsModel.HostName = HostName;
+            cmsModel.UpTime = UpTime;
+            if (string.IsNullOrEmpty(cmsModel.OSRelease))
+                cmsModel.OSRelease = PRETTY_NAME;
+            if (string.IsNullOrEmpty(cmsModel.CPUCoreNum))
+                cmsModel.CPUCoreNum = CPUCoreNum;
+            cmsModel.TopRes = TOPRec;
+            cmsModel.LinuxKernelVersionRes = LinuxKernelVersion;
+
+            // 处理CPU数据
+            try
+            {
+                cmsModel.CPUUsage = $"{cpuUsages[0][0]}%";
+                cmsModel.CPUCoreNum = CPUCoreNum.Split('\n')[0];
+                cmsModel.CPUUserUsage = $"{cpuUsages[0][1]}%";
+                cmsModel.CPUSysUsage = $"{cpuUsages[0][2]}%";
+                cmsModel.CPUIdleUsage = $"{cpuUsages[0][3]}%";
+                cmsModel.CPUIOUsage = $"{cpuUsages[0][4]}%";
+            }
+            catch (Exception ex)
+            {
+                logger?.LogError($"CPU data update failed: {ex.Message}");
+            }
+
+            // 负载信息 - 获取结果失败不更新
+            if (loadAverage[3] != "0" || loadAverage[4] != "0" || loadAverage[5] != "0")
+            {
+                cmsModel.Average1 = loadAverage[0];
+                cmsModel.Average5 = loadAverage[1];
+                cmsModel.Average15 = loadAverage[2];
+                cmsModel.Average1Percentage = loadAverage[3];
+                cmsModel.Average5Percentage = loadAverage[4];
+                cmsModel.Average15Percentage = loadAverage[5];
+            }
+
+            // 内存数据
+            try
+            {
+                double memTotal = double.Parse(memUsages[0]);
+                double memFree = double.Parse(memUsages[1]);
+                double memAvailable = double.Parse(memUsages[2]);
+
+                double memUsagesValue = (memTotal - memAvailable) * 100 / memTotal;
+                cmsModel.MEMUsage = $"{memUsagesValue:F0}%";
+                double memFreeValue = memFree * 100 / memTotal;
+                cmsModel.MEMFree = $"{memFreeValue:F2}%";
+                double memAvailableValue = memAvailable * 100 / memTotal;
+                cmsModel.MEMAvailable = $"{memAvailableValue:F2}%";
+                double memUsagePageCacheValue = memUsagesValue + (memAvailableValue - memFreeValue);
+                cmsModel.MEMUsagePageCache = $"{memUsagePageCacheValue:F2}%";
+            }
+            catch (Exception ex)
+            {
+                logger?.LogError($"MEM data update failed: {ex.Message}");
+            }
+
+            // Swap数据
+            try
+            {
+                double swapCached = double.Parse(memUsages[3]);
+                double swapTotal = double.Parse(memUsages[4]);
+                double swapFree = double.Parse(memUsages[5]);
+
+                if (swapTotal != 0)
+                {
+                    double swapUsagesValue = (swapTotal - swapFree) * 100 / swapTotal;
+                    cmsModel.SwapUsage = $"{swapUsagesValue:F0}%";
+                    double swapCachedValue = swapCached * 100 / swapTotal;
+                    cmsModel.SwapCached = $"{swapCachedValue:F2}%";
+                    cmsModel.SwapCachedDisplay = $"{swapUsagesValue + swapCachedValue:F2}%";
+                }
+                else
+                {
+                    cmsModel.SwapUsage = "0%";
+                    cmsModel.SwapCached = "0%";
+                    cmsModel.SwapCachedDisplay = "0%";
+                }
+            }
+            catch (Exception ex)
+            {
+                logger?.LogError($"Swap data update failed: {ex.Message}");
+            }
+
+            // 总内存/总Swap
+            try
+            {
+                cmsModel.TotalMEM = $"{NetUnitConversion(decimal.Parse(memUsages[0]) * 1024)}";
+                cmsModel.TotalSwap = $"{NetUnitConversion(decimal.Parse(memUsages[4]) * 1024)}";
+            }
+            catch (Exception ex)
+            {
+                logger?.LogError($"Total MEM/Swap update failed: {ex.Message}");
+            }
+
+            // CPU核心令牌
+            try
+            {
+                cmsModel.CPUCoreTokens = cpuUsages.Skip(1).Select(cpuUsage => cpuUsage[0]).ToArray();
+            }
+            catch (Exception ex)
+            {
+                logger?.LogError($"CPUCoreTokens update failed: {ex.Message}");
+            }
+
+            // 挂载和网络信息
+            cmsModel.MountInfos = MountInfos;
+            cmsModel.NetworkInterfaceInfos = NetworkInterfaceInfos;
+
+            // 网络汇总
+            cmsModel.NETSent = $"{NetUnitConversion(cmsModel.NetworkInterfaceInfos.Sum(iface => iface.TransmitSpeedByte))}/s ↑";
+            cmsModel.NETReceived = $"{NetUnitConversion(cmsModel.NetworkInterfaceInfos.Sum(iface => iface.ReceiveSpeedByte))}/s ↓";
+
+            // 磁盘汇总
+            cmsModel.DISKRead = $"{NetUnitConversion(DiskStatus.Sum(dstatus => dstatus.SectorsReadPerSecondOrigin))}/s R";
+            cmsModel.DISKWrite = $"{NetUnitConversion(DiskStatus.Sum(dstatus => dstatus.SectorsWrittenPerSecondOrigin))}/s W";
+        }
+
         public static string NetUnitConversion(decimal netValue)
         {
             decimal result;
@@ -748,19 +893,19 @@ namespace SeeMyServer.Methods
             switch (netValue)
             {
                 case decimal n when n >= 1000000000000:
-                    result = netValue / 1024 / 1024 / 1024 / 1024;
+                    result = netValue / 1024m / 1024m / 1024m / 1024m;
                     unit = "TB";
                     break;
                 case decimal n when n >= 1000000000:
-                    result = netValue / 1024 / 1024 / 1024;
+                    result = netValue / 1024m / 1024m / 1024m;
                     unit = "GB";
                     break;
                 case decimal n when n >= 1000000:
-                    result = netValue / 1024 / 1024;
+                    result = netValue / 1024m / 1024m;
                     unit = "MB";
                     break;
                 case decimal n when n >= 1000:
-                    result = netValue / 1024;
+                    result = netValue / 1024m;
                     unit = "KB";
                     break;
                 default:
@@ -1049,10 +1194,7 @@ namespace SeeMyServer.Methods
         {
             // 生成一个随机的密钥
             byte[] key = new byte[32];
-            using (var rng = new RNGCryptoServiceProvider())
-            {
-                rng.GetBytes(key);
-            }
+            RandomNumberGenerator.Fill(key);
             return Convert.ToBase64String(key);
         }
 
@@ -1060,10 +1202,7 @@ namespace SeeMyServer.Methods
         {
             // 生成一个随机的初始化向量
             byte[] iv = new byte[16];
-            using (var rng = new RNGCryptoServiceProvider())
-            {
-                rng.GetBytes(iv);
-            }
+            RandomNumberGenerator.Fill(iv);
             return Convert.ToBase64String(iv);
         }
 

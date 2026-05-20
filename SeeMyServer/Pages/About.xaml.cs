@@ -13,6 +13,9 @@ namespace SeeMyServer.Pages
 {
     public sealed partial class About : Page
     {
+        // 复用 HttpClient 实例（最佳实践）
+        private static readonly HttpClient httpClient = new HttpClient();
+
         public About()
         {
             this.InitializeComponent();
@@ -39,9 +42,9 @@ namespace SeeMyServer.Pages
         }
         private async Task<string> HTTPResponse(string http)
         {
-            using (HttpClient client = new HttpClient())
+            try
             {
-                HttpResponseMessage response = await client.GetAsync(http);
+                HttpResponseMessage response = await httpClient.GetAsync(http);
                 if (response.IsSuccessStatusCode)
                 {
                     // 从GitHub的响应中读取文件内容
@@ -51,6 +54,10 @@ namespace SeeMyServer.Pages
                 {
                     return "";
                 }
+            }
+            catch
+            {
+                return "";
             }
         }
         private async void GetList()

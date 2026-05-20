@@ -58,17 +58,10 @@ namespace SeeMyServer.Pages
         {
             dataListView.SelectedItem = null;
         }
-        private async void LoadString()
+        private void LoadString()
         {
-            // 在异步方法中执行任务
-            await Task.Run(() =>
-            {
-                _dispatcherQueue.TryEnqueue(() =>
-                {
-                    ConfirmDelete.Content = resourceLoader.GetString("Confirm");
-                    CancelDelete.Content = resourceLoader.GetString("Cancel");
-                });
-            });
+            ConfirmDelete.Content = resourceLoader.GetString("Confirm");
+            CancelDelete.Content = resourceLoader.GetString("Cancel");
         }
 
         private ObservableCollection<CMSModel> dataList;
@@ -303,141 +296,8 @@ namespace SeeMyServer.Pages
             if (Usages.Result != null)
             {
                 cmsModel.NumberOfFailures = 0;
-
-                // 解析结果
-                var cpuUsages = Usages.Result.Item1;
-                var memUsages = Usages.Result.Item2;
-                var NetworkInterfaceInfos = Usages.Result.Item3;
-                var MountInfos = Usages.Result.Item4[0];
-                var DiskStatus = Usages.Result.Item4[1];
-                var UpTime = Usages.Result.Item5[0];
-                var HostName = Usages.Result.Item5[1];
-                var CPUCoreNum = Usages.Result.Item5[2];
-                var PRETTY_NAME = Usages.Result.Item5[3];
-                var TOPRec = Usages.Result.Item5[4];
-                var LinuxKernelVersion = Usages.Result.Item5[5];
-                var loadAverage = Usages.Result.Item6;
-
-                // 只有HostName和UpTime为空才更新
-                if (cmsModel.HostName == null || cmsModel.HostName == "")
-                {
-                    cmsModel.HostName = HostName;
-                }
-                cmsModel.UpTime = UpTime;
-                if (cmsModel.OSRelease == null || cmsModel.OSRelease == "")
-                {
-                    cmsModel.OSRelease = PRETTY_NAME;
-                }
-                cmsModel.TopRes = TOPRec;
-                cmsModel.LinuxKernelVersionRes = LinuxKernelVersion;
-
-                // 处理获取到的数据
-                try
-                {
-                    cmsModel.CPUUsage = $"{cpuUsages[0][0]}%";
-                    cmsModel.CPUCoreNum = CPUCoreNum.Split('\n')[0];
-                    cmsModel.CPUUserUsage = $"{cpuUsages[0][1]}%";
-                    cmsModel.CPUSysUsage = $"{cpuUsages[0][2]}%";
-                    cmsModel.CPUIdleUsage = $"{cpuUsages[0][3]}%";
-                    cmsModel.CPUIOUsage = $"{cpuUsages[0][4]}%";
-                }
-                catch (Exception ex)
-                {
-                    logger.LogError(ex.Message);
-                }
-
-                // 获取结果失败不更新
-                if (loadAverage[3] != "0" || loadAverage[4] != "0" || loadAverage[5] != "0")
-                {
-                    cmsModel.Average1 = loadAverage[0];
-                    cmsModel.Average5 = loadAverage[1];
-                    cmsModel.Average15 = loadAverage[2];
-                    cmsModel.Average1Percentage = loadAverage[3];
-                    cmsModel.Average5Percentage = loadAverage[4];
-                    cmsModel.Average15Percentage = loadAverage[5];
-                }
-
-                try
-                {
-                    double memTotal = double.Parse(memUsages[0]);
-                    double memFree = double.Parse(memUsages[1]);
-                    double memAvailable = double.Parse(memUsages[2]);
-
-                    // 计算内存占用百分比
-                    double memUsagesValue = (memTotal - memAvailable) * 100 / memTotal;
-                    cmsModel.MEMUsage = $"{memUsagesValue:F0}%";
-                    // Free 百分比
-                    double memFreeValue = memFree * 100 / memTotal;
-                    cmsModel.MEMFree = $"{memFreeValue:F2}%";
-                    // Available 百分比
-                    double memAvailableValue = memAvailable * 100 / memTotal;
-                    cmsModel.MEMAvailable = $"{memAvailableValue:F2}%";
-                    // 页面缓存
-                    double memUsagePageCacheValue = memUsagesValue + (memAvailableValue - memFreeValue);
-                    cmsModel.MEMUsagePageCache = $"{memUsagePageCacheValue:F2}%";
-                }
-                catch (Exception ex)
-                {
-                    logger.LogError(ex.Message);
-                }
-                try
-                {
-                    double swapCached = double.Parse(memUsages[3]);
-                    double swapTotal = double.Parse(memUsages[4]);
-                    double swapFree = double.Parse(memUsages[5]);
-
-                    if (swapTotal != 0)
-                    {
-                        // Swap 占用百分比
-                        double swapUsagesValue = (swapTotal - swapFree) * 100 / swapTotal;
-                        cmsModel.SwapUsage = $"{swapUsagesValue:F0}%";
-                        // Swap Cached 百分比
-                        double swapCachedValue = swapCached * 100 / swapTotal;
-                        cmsModel.SwapCached = $"{swapCachedValue:F2}%";
-                        double swapCachedDisplay = swapUsagesValue + swapCachedValue;
-                        cmsModel.SwapCachedDisplay = $"{swapCachedDisplay:F2}%";
-                    }
-                    else
-                    {
-                        cmsModel.SwapUsage = $"0%";
-                        cmsModel.SwapCached = $"0%";
-                        cmsModel.SwapCachedDisplay = $"0%";
-                    }
-                }
-                catch (Exception ex)
-                {
-                    logger.LogError(ex.Message);
-                }
-
-                try
-                {
-                    cmsModel.TotalMEM = $"{Method.NetUnitConversion(decimal.Parse(memUsages[0]) * 1024)}";
-                    cmsModel.TotalSwap = $"{Method.NetUnitConversion(decimal.Parse(memUsages[4]) * 1024)}";
-                }
-                catch (Exception ex)
-                {
-                    logger.LogError(ex.Message);
-                }
-
-                try
-                {
-                    cmsModel.CPUCoreTokens = cpuUsages.Skip(1).Select(cpuUsage => cpuUsage[0]).ToArray();
-                }
-                catch (Exception ex)
-                {
-                    logger.LogError(ex.Message);
-                }
-
-                cmsModel.MountInfos = MountInfos;
-                cmsModel.NetworkInterfaceInfos = NetworkInterfaceInfos;
-
-                cmsModel.NETSent = $"{Method.NetUnitConversion(cmsModel.NetworkInterfaceInfos.Sum(iface => iface.TransmitSpeedByte))}/s ↑";
-                cmsModel.NETReceived = $"{Method.NetUnitConversion(cmsModel.NetworkInterfaceInfos.Sum(iface => iface.ReceiveSpeedByte))}/s ↓";
-
-                cmsModel.DISKRead = $"{Method.NetUnitConversion(DiskStatus.Sum(dstatus => dstatus.SectorsReadPerSecondOrigin))}/s R";
-                cmsModel.DISKWrite = $"{Method.NetUnitConversion(DiskStatus.Sum(dstatus => dstatus.SectorsWrittenPerSecondOrigin))}/s W";
+                Method.UpdateCMSModelFromUsageResult(cmsModel, Usages.Result, logger);
             }
-
         }
         private async void Timer_Tick(object sender, object e)
         {

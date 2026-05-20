@@ -2,8 +2,8 @@
 using SeeMyServer.Helper;
 using System;
 using Microsoft.Windows.AppLifecycle;
-using System.Runtime.InteropServices;
 using Microsoft.Windows.ApplicationModel.Resources;
+using PInvoke;
 
 namespace SeeMyServer
 {
@@ -45,12 +45,12 @@ namespace SeeMyServer
                 string appTitle = resourceLoader.GetString("AppTitle"); // 动态加载 AppTitle 资源
 
                 // 确保已激活的实例获得焦点并显示在前台
-                IntPtr existingHwnd = FindWindow(null, appTitle);  // 使用从资源文件加载的窗口标题查找窗口句柄
+                IntPtr existingHwnd = User32.FindWindow(null, appTitle);  // 使用从资源文件加载的窗口标题查找窗口句柄
                 if (existingHwnd != IntPtr.Zero)
                 {
                     // 显示窗口并设置为前台
-                    PInvoke.User32.ShowWindow(existingHwnd, PInvoke.User32.WindowShowStyle.SW_RESTORE); // 如果窗口最小化，则恢复
-                    PInvoke.User32.SetForegroundWindow(existingHwnd); // 将窗口设为前台
+                    User32.ShowWindow(existingHwnd, User32.WindowShowStyle.SW_RESTORE); // 如果窗口最小化，则恢复
+                    User32.SetForegroundWindow(existingHwnd); // 将窗口设为前台
                 }
 
                 // 退出当前实例
@@ -77,7 +77,7 @@ namespace SeeMyServer
         private void SetWindowSize(IntPtr hwnd, int width, int height)
         {
             // 获取 DPI 缩放比例
-            var dpi = PInvoke.User32.GetDpiForWindow(hwnd);
+            var dpi = User32.GetDpiForWindow(hwnd);
             float scalingFactor = (float)dpi / 96;
 
             // 根据缩放比例调整窗口尺寸
@@ -85,17 +85,13 @@ namespace SeeMyServer
             height = (int)(height * scalingFactor);
 
             // 设置窗口大小，不移动窗口位置
-            PInvoke.User32.SetWindowPos(
+            User32.SetWindowPos(
                 hwnd,
-                PInvoke.User32.SpecialWindowHandles.HWND_TOP,
+                User32.SpecialWindowHandles.HWND_TOP,
                 0, 0, width, height,
-                PInvoke.User32.SetWindowPosFlags.SWP_NOMOVE
+                User32.SetWindowPosFlags.SWP_NOMOVE
             );
         }
-
-        // 通过窗口标题查找窗口句柄的方法
-        [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
-        private static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
     }
 
 }

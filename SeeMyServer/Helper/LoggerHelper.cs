@@ -1,22 +1,19 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace SeeMyServer.Helper
 {
-    public class Logger
+    public class Logger : IDisposable
     {
         private string logFilePath;
         private int maxLogSize;
         private ConcurrentQueue<string> logQueue = new ConcurrentQueue<string>();
-        private bool writingInProgress = false;
-        private readonly object lockObject = new object();
+        private readonly AutoResetEvent logEvent = new AutoResetEvent(false);
+        private CancellationTokenSource cts = new CancellationTokenSource();
+        private bool disposed = false;
 
         public Logger(int maxFileSizeMB)
         {
@@ -54,63 +51,43 @@ namespace SeeMyServer.Helper
         private void Log(string message)
         {
             logQueue.Enqueue(message);
+            logEvent.Set(); // 通知写入线程有新日志
         }
 
         private void WriteLogThread()
         {
-            while (true)
+            while (!cts.IsCancellationRequested)
             {
-                if (!writingInProgress && logQueue.Count > 0)
+                // 等待信号，超时5秒后也检查一次（防止信号丢失）
+                logEvent.WaitOne(TimeSpan.FromSeconds(5));
+
+                while (logQueue.TryDequeue(out string logEntry))
                 {
-                    Monitor.Enter(lockObject);
                     try
                     {
-                        if (!writingInProgress && logQueue.Count > 0)
+                        using (FileStream fileStream = new FileStream(logFilePath, FileMode.Append, FileAccess.Write, FileShare.Read))
+                        using (StreamWriter streamWriter = new StreamWriter(fileStream))
                         {
-                            writingInProgress = true;
-                            string[] logEntries = logQueue.ToArray();
-                            // 立即清空队列以释放锁
-                            logQueue.Clear(); 
-
-                            try
-                            {
-                                using (FileStream fileStream = new FileStream(logFilePath, FileMode.Append, FileAccess.Write, FileShare.Read))
-                                using (StreamWriter streamWriter = new StreamWriter(fileStream))
-                                {
-                                    foreach (string nextLogEntry in logEntries)
-                                    {
-                                        streamWriter.WriteLine(nextLogEntry);
-                                    }
-                                }
-
-                                // 写入所有条目后检查日志大小
-                                if (new FileInfo(logFilePath).Length > maxLogSize)
-                                {
-                                    RotateLogFile();
-                                }
-                            }
-                            catch (IOException ex)
-                            {
-                                // 处理 IOException（文件正在使用），等待并重试
-                                //throw new Exception($"IOException occurred: {ex.Message}");
-                                // 等待1秒
-                                Thread.Sleep(1000);
-                                // 重试写入
-                                continue; 
-                            }
-                            finally
-                            {
-                                writingInProgress = false;
-                            }
+                            streamWriter.WriteLine(logEntry);
                         }
                     }
-                    finally
+                    catch (IOException)
                     {
-                        Monitor.Exit(lockObject);
+                        // 处理 IOException（文件正在使用），重新入队并等待
+                        logQueue.Enqueue(logEntry);
+                        Thread.Sleep(1000);
                     }
                 }
-                // 每100毫秒检查一次队列
-                Thread.Sleep(100); 
+
+                // 写入所有条目后检查日志大小
+                try
+                {
+                    if (new FileInfo(logFilePath).Length > maxLogSize)
+                    {
+                        RotateLogFile();
+                    }
+                }
+                catch { /* 忽略文件大小检查异常 */ }
             }
         }
 
@@ -145,6 +122,18 @@ namespace SeeMyServer.Helper
             else
             {
                 Console.WriteLine("Log file directory does not exist.");
+            }
+        }
+
+        public void Dispose()
+        {
+            if (!disposed)
+            {
+                disposed = true;
+                cts.Cancel();
+                logEvent.Set(); // 唤醒写入线程使其退出
+                logEvent.Dispose();
+                cts.Dispose();
             }
         }
     }

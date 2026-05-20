@@ -18,6 +18,8 @@ namespace SeeMyServer.Datas
             // 初始化数据库连接
             using (SqliteConnection connection = new SqliteConnection(connectionString))
             {
+                // 打开连接
+                connection.Open();
                 // 如果不存在表则建表
                 CreateTableIfNotExists(connection);
                 // 每次初始化连接都对数据库进行一次升级检查
@@ -28,9 +30,6 @@ namespace SeeMyServer.Datas
         // 建表 如果不存在
         public void CreateTableIfNotExists(SqliteConnection connection)
         {
-            // 连接打开
-            connection.Open();
-
             // 创建信息表，存储服务器相关配置数据
             var createTableCommand = connection.CreateCommand();
             createTableCommand.CommandText = "CREATE TABLE IF NOT EXISTS CMSTable (Id INTEGER PRIMARY KEY, Name TEXT, HostIP TEXT, HostPort TEXT, SSHUser TEXT, SSHPasswd BLOB, SSHKey TEXT, OSType TEXT, SSHKeyIsOpen TEXT)";
@@ -65,9 +64,6 @@ namespace SeeMyServer.Datas
         // 检查数据库版本
         public int GetDatabaseVersion(SqliteConnection connection)
         {
-            // 连接打开
-            connection.Open();
-
             // 查询数据库版本
             var selectVersion = connection.CreateCommand();
             selectVersion.CommandText = "SELECT VersionNumber FROM Version";
@@ -85,9 +81,6 @@ namespace SeeMyServer.Datas
         // 更新数据库版本信息
         public void UpgradeDatabaseVersion(SqliteConnection connection)
         {
-            // 连接打开
-            connection.Open();
-
             // 检查版本，新建数据库要插入版本号
             var cmd = connection.CreateCommand();
             // 数据库的版本号，由全局变量DatabaseVersion控制
@@ -111,7 +104,9 @@ namespace SeeMyServer.Datas
         // 如果数据库升级时不可避免的出现版本兼容问题，请在这里添加升级代码，确保旧数据库可以稳定转移到新数据库。
         public void UpgradeDatabase(SqliteConnection connection)
         {
-            connection.Open();
+            // 如果连接未打开，则打开
+            if (connection.State != System.Data.ConnectionState.Open)
+                connection.Open();
             int currentVersion = GetDatabaseVersion(connection);
 
             // 检查当前数据库版本，如果小于软件数据库版本，则执行升级操作
