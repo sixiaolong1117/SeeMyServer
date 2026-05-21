@@ -245,13 +245,13 @@
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <HyperlinkButton
+                        <!-- <HyperlinkButton
                             Grid.Row="0"
                             Grid.Column="0"
                             HorizontalAlignment="Left"
                             VerticalAlignment="Center"
                             Content="司晓龙 (SI Xiaolong)"
-                            NavigateUri="https://about.sixiaolong.win/" />
+                            NavigateUri="https://about.sixiaolong.win/" /> -->
                         <HyperlinkButton
                             Grid.Row="1"
                             Grid.Column="0"

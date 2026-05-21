@@ -127,7 +127,7 @@
     <value>关于</value>
   </data>
   <data name="AboutCMSRight.Text" xml:space="preserve">
-    <value>See My Server</value>
+    <value>ServerDash</value>
   </data>
   <data name="AboutCMSRightTip.Text" xml:space="preserve">
     <value>© 2024 司晓龙. 使用 MIT License.</value>
@@ -184,7 +184,7 @@
     <value>外观与行为</value>
   </data>
   <data name="AppTitle" xml:space="preserve">
-    <value>See My Server</value>
+    <value>ServerDash</value>
   </data>
   <data name="Cancel" xml:space="preserve">
     <value>取消</value>

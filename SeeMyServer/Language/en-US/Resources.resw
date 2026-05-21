@@ -127,7 +127,7 @@
     <value>About</value>
   </data>
   <data name="AboutCMSRight.Text" xml:space="preserve">
-    <value>See My Server</value>
+    <value>ServerDash</value>
   </data>
   <data name="AboutCMSRightTip.Text" xml:space="preserve">
     <value>© 2024 SI Xiaolong. Under MIT License.</value>
@@ -184,7 +184,7 @@
     <value>Appearance &amp; behavior</value>
   </data>
   <data name="AppTitle" xml:space="preserve">
-    <value>See My Server</value>
+    <value>ServerDash</value>
   </data>
   <data name="Cancel" xml:space="preserve">
     <value>Cancel</value>

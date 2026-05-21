@@ -67,7 +67,7 @@ namespace SeeMyServer
             // SetWindowSize(hwnd, 1110, 800);
 
             // 记录启动日志
-            logger.LogInfo("See My Server starts.");
+            logger.LogInfo("ServerDash starts.");
 
             // 激活窗口
             m_window.Activate();

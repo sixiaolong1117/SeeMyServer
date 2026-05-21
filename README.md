@@ -1,5 +1,5 @@
 <p align="center">
-  <h1 align="center">See My Server</h1>
+  <h1 align="center">ServerDash</h1>
   <p align="center">一款服务器监控软件，使用 WinUI3</p>
   <p align="center">
     <a href="https://github.com/SIXiaolong1117/SeeMyServer/blob/master/LICENSE">
