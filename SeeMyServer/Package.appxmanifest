@@ -8,11 +8,11 @@
   IgnorableNamespaces="uap rescap">
 
   <Identity
-    Name="f264ac4a-3bea-4e7d-b22a-5149a0456c29"
-    Publisher="CN=SIXiaolong"
-    Version="1.4.0.0" />
+    Name="53093SIXiaolong.ServerDash"
+    Publisher="CN=C2E30F83-9FC0-4E81-A5EE-358CB57A431B"
+    Version="1.1.1.0" />
 
-  <mp:PhoneIdentity PhoneProductId="f264ac4a-3bea-4e7d-b22a-5149a0456c29" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
+  <mp:PhoneIdentity PhoneProductId="a0759bd2-846c-4431-a3ab-2d9d607663cd" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
   <Properties>
     <DisplayName>ServerDash</DisplayName>
