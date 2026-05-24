@@ -369,6 +369,9 @@
   <data name="DeleteSSHKeyButton.Content" xml:space="preserve">
     <value>删除密钥</value>
   </data>
+  <data name="ManageSSHKeysNavButton.Content" xml:space="preserve">
+    <value>管理密钥</value>
+  </data>
   <data name="SSHKeyNameTextBox.Header" xml:space="preserve">
     <value>密钥名称</value>
   </data>

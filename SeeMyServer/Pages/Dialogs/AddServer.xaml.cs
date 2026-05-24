@@ -74,57 +74,7 @@ namespace SeeMyServer.Pages.Dialogs
 
         private void MyDialog_PrimaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
         {
-            // 在"确定"按钮点击事件中保存用户输入的内容
-            CMSData.Name = string.IsNullOrEmpty(DisplayNameTextBox.Text) ? "<Unnamed>" : DisplayNameTextBox.Text;
-            CMSData.HostIP = HostIPTextBox.Text;
-            CMSData.HostPort = HostPortTextBox.Text;
-            CMSData.SSHUser = SSHUserTextBox.Text;
-            CMSData.OSType = GetSelectedComboBoxItemAsString(OSTypeComboBox);
-
-            // 根据Key Auth状态写入
-            if (SSHKeyOrPasswdToggleSwitch.IsOn == true)
-            {
-                CMSData.SSHKeyIsOpen = "True";
-                CMSData.SSHKeyId = GetSelectedSSHKeyId();
-                CMSData.SSHKey = "";
-                CMSData.SSHPasswd = null;
-            }
-            else
-            {
-                if (SSHPasswd.Password != "" && SSHPasswd.Password != null)
-                {
-                    CMSData.SSHKeyIsOpen = "False";
-
-                    // 检查是否已经存在密钥和初始化向量，如果不存在则生成新的
-                    string key = Method.LoadKeyFromLocalSettings();
-                    string iv = Method.LoadIVFromLocalSettings();
-
-                    // 如果不存在密钥和初始化向量，则生成新的
-                    if (string.IsNullOrEmpty(key) || string.IsNullOrEmpty(iv))
-                    {
-                        key = Method.GenerateRandomKey();
-                        iv = Method.GenerateRandomIV();
-
-                        // 将新生成的密钥和初始化向量保存到 localSettings 中
-                        Method.SaveKeyToLocalSettings(key);
-                        Method.SaveIVToLocalSettings(iv);
-                    }
-
-                    // 使用的对称加密算法
-                    SymmetricAlgorithm symmetricAlgorithm = new AesManaged();
-
-                    // 设置加密密钥和初始化向量
-                    symmetricAlgorithm.Key = Convert.FromBase64String(key);
-                    symmetricAlgorithm.IV = Convert.FromBase64String(iv);
-
-                    // 加密字符串
-                    string encrypted = Method.EncryptString(SSHPasswd.Password, symmetricAlgorithm);
-
-                    CMSData.SSHPasswd = encrypted;
-                    CMSData.SSHKeyId = "";
-                    CMSData.SSHKey = null;
-                }
-            }
+            SaveFormStateToModel(true);
         }
 
         // 获取选中内容并转换为字符串
@@ -176,23 +126,23 @@ namespace SeeMyServer.Pages.Dialogs
             }
         }
 
-        private void ConfirmPasteSSHKey_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                int sshKeyId = SSHKeyMethod.SavePrivateKey(SSHKeyNameTextBox.Text, SSHPrivateKeyTextBox.Text);
-                SSHKeyNameTextBox.Text = "";
-                SSHPrivateKeyTextBox.Text = "";
-                PasteSSHKeyError.Visibility = Visibility.Collapsed;
-                PasteSSHKeyFlyout.Hide();
-                LoadSSHKeys(sshKeyId.ToString());
-            }
-            catch (Exception ex)
-            {
-                PasteSSHKeyError.Text = string.Format(resourceLoader.GetString("PasteSSHKeyError"), ex.Message);
-                PasteSSHKeyError.Visibility = Visibility.Visible;
-            }
-        }
+        //private void ConfirmPasteSSHKey_Click(object sender, RoutedEventArgs e)
+        //{
+        //    try
+        //    {
+        //        int sshKeyId = SSHKeyMethod.SavePrivateKey(SSHKeyNameTextBox.Text, SSHPrivateKeyTextBox.Text);
+        //        SSHKeyNameTextBox.Text = "";
+        //        SSHPrivateKeyTextBox.Text = "";
+        //        PasteSSHKeyError.Visibility = Visibility.Collapsed;
+        //        PasteSSHKeyFlyout.Hide();
+        //        LoadSSHKeys(sshKeyId.ToString());
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        PasteSSHKeyError.Text = string.Format(resourceLoader.GetString("PasteSSHKeyError"), ex.Message);
+        //        PasteSSHKeyError.Visibility = Visibility.Visible;
+        //    }
+        //}
 
         private void DeleteSSHKey_Click(object sender, RoutedEventArgs e)
         {
@@ -204,9 +154,98 @@ namespace SeeMyServer.Pages.Dialogs
             }
         }
 
+        private async void ManageSSHKeysNav_Click(object sender, RoutedEventArgs e)
+        {
+            // WinUI 3 不允许在 ContentDialog 内再打开 ContentDialog
+            // 方案：关闭当前对话框 → 打开管理密钥 → 重新打开当前对话框（保留状态）
+
+            // 1. 保存当前表单输入到 CMSData
+            SaveFormStateToModel(false);
+
+            // 2. 关闭当前 AddServer（调用方 HomePage 会收到 None，不执行保存）
+            this.Hide();
+
+            // 3. 打开管理密钥对话框（在主窗口 XamlRoot 上）
+            ManageSSHKeys keyDialog = new ManageSSHKeys();
+            keyDialog.XamlRoot = App.m_window.Content.XamlRoot;
+            keyDialog.Style = Application.Current.Resources["DefaultContentDialogStyle"] as Style;
+            keyDialog.CloseButtonText = resourceLoader.GetString("Cancel");
+            await keyDialog.ShowAsync();
+
+            // 4. 重新创建 AddServer 对话框，恢复之前的状态
+            AddServer newDialog = new AddServer(CMSData);
+            newDialog.XamlRoot = App.m_window.Content.XamlRoot;
+            newDialog.Style = Application.Current.Resources["DefaultContentDialogStyle"] as Style;
+            newDialog.PrimaryButtonText = resourceLoader.GetString(
+                CMSData.Id == 0 ? "DialogAdd" : "DialogChange");
+            newDialog.CloseButtonText = resourceLoader.GetString("DialogClose");
+            newDialog.DefaultButton = ContentDialogButton.Primary;
+
+            ContentDialogResult result = await newDialog.ShowAsync();
+
+            // 5. 用户确认后直接保存并刷新首页
+            if (result == ContentDialogResult.Primary)
+            {
+                SQLiteHelper dbHelper = new SQLiteHelper();
+                if (CMSData.Id == 0)
+                {
+                    CMSData.Id = dbHelper.InsertData(CMSData);
+                }
+                else
+                {
+                    dbHelper.UpdateData(CMSData);
+                }
+                // 导航回首页触发刷新
+                App.m_window.NavigateToPage(typeof(HomePage), null);
+            }
+        }
+
+        /// <summary>
+        /// 将当前表单输入保存到 CMSData（不触发 PrimaryButton 的完整保存逻辑）
+        /// </summary>
+        private void SaveFormStateToModel(bool isPrimary)
+        {
+            CMSData.Name = string.IsNullOrEmpty(DisplayNameTextBox.Text) ? "<Unnamed>" : DisplayNameTextBox.Text;
+            CMSData.HostIP = HostIPTextBox.Text;
+            CMSData.HostPort = HostPortTextBox.Text;
+            CMSData.SSHUser = SSHUserTextBox.Text;
+            CMSData.OSType = GetSelectedComboBoxItemAsString(OSTypeComboBox);
+
+            if (SSHKeyOrPasswdToggleSwitch.IsOn == true)
+            {
+                CMSData.SSHKeyIsOpen = "True";
+                CMSData.SSHKeyId = GetSelectedSSHKeyId();
+                CMSData.SSHKey = "";
+                CMSData.SSHPasswd = null;
+            }
+            else if (isPrimary && SSHPasswd.Password != "" && SSHPasswd.Password != null)
+            {
+                // 仅在 PrimaryButton 按下时加密密码（MyDialog_PrimaryButtonClick 的原有逻辑）
+                CMSData.SSHKeyIsOpen = "False";
+
+                string key = Method.LoadKeyFromLocalSettings();
+                string iv = Method.LoadIVFromLocalSettings();
+                if (string.IsNullOrEmpty(key) || string.IsNullOrEmpty(iv))
+                {
+                    key = Method.GenerateRandomKey();
+                    iv = Method.GenerateRandomIV();
+                    Method.SaveKeyToLocalSettings(key);
+                    Method.SaveIVToLocalSettings(iv);
+                }
+
+                SymmetricAlgorithm symmetricAlgorithm = new AesManaged();
+                symmetricAlgorithm.Key = Convert.FromBase64String(key);
+                symmetricAlgorithm.IV = Convert.FromBase64String(iv);
+                string encrypted = Method.EncryptString(SSHPasswd.Password, symmetricAlgorithm);
+                CMSData.SSHPasswd = encrypted;
+                CMSData.SSHKeyId = "";
+                CMSData.SSHKey = null;
+            }
+        }
+
         private void SSHKeyComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            DeleteSSHKeyButton.IsEnabled = SSHKeyComboBox.SelectedItem != null;
+        //    DeleteSSHKeyButton.IsEnabled = SSHKeyComboBox.SelectedItem != null;
         }
 
         private void LoadSSHKeys(string selectedSSHKeyId)
@@ -225,7 +264,7 @@ namespace SeeMyServer.Pages.Dialogs
                 }
             }
 
-            DeleteSSHKeyButton.IsEnabled = SSHKeyComboBox.SelectedItem != null;
+            //DeleteSSHKeyButton.IsEnabled = SSHKeyComboBox.SelectedItem != null;
         }
 
         private string GetSelectedSSHKeyId()

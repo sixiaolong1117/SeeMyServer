@@ -193,7 +193,7 @@
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center"
                             Orientation="Vertical">
-                            <Button
+                            <!-- <Button
                                 x:Name="ImportSSHKeyButton"
                                 x:Uid="ImportSSHKeyButton"
                                 Width="260"
@@ -242,7 +242,15 @@
                                 Width="260"
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Bottom"
-                                Click="DeleteSSHKey_Click" />
+                                Click="DeleteSSHKey_Click" /> -->
+                            <Button
+                                x:Name="ManageSSHKeysNavButton"
+                                x:Uid="ManageSSHKeysNavButton"
+                                Width="260"
+                                Margin="0,8,0,0"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Bottom"
+                                Click="ManageSSHKeysNav_Click" />
                         </StackPanel>
                         <TextBlock
                             x:Uid="SSHKeyTips1"
