@@ -19,10 +19,12 @@ namespace SeeMyServer.Pages.Dialogs
         ApplicationDataContainer localSettings = ApplicationData.Current.LocalSettings;
         public CMSModel CMSData { get; private set; }
         public CMSModel IncomingData { get; private set; }
+        public bool ManageSSHKeysRequested { get; private set; }
+        public string PendingPlainPassword { get; private set; }
         private readonly ResourceLoader resourceLoader = ResourceLoader.GetForViewIndependentUse();
         private List<SSHKeyModel> sshKeys = new List<SSHKeyModel>();
         private Logger logger;
-        public AddServer(CMSModel cmsModel)
+        public AddServer(CMSModel cmsModel, string pendingPlainPassword = null)
         {
             this.InitializeComponent();
 
@@ -47,7 +49,11 @@ namespace SeeMyServer.Pages.Dialogs
             {
                 SSHKeyOrPasswdToggleSwitch.IsOn = false;
             }
-            if (cmsModel.SSHPasswd != null && cmsModel.SSHPasswd != "")
+            if (!string.IsNullOrEmpty(pendingPlainPassword))
+            {
+                SSHPasswd.Password = pendingPlainPassword;
+            }
+            else if (cmsModel.SSHPasswd != null && cmsModel.SSHPasswd != "")
             {
                 SSHPasswd.PlaceholderText = "<Not Changed>";
             }
@@ -165,48 +171,12 @@ namespace SeeMyServer.Pages.Dialogs
             if (!await WindowsHelloHelper.VerifyAsync(resourceLoader.GetString("WindowsHelloVerifyMessage")))
                 return;
 
-            // WinUI 3 不允许在 ContentDialog 内再打开 ContentDialog
-            // 方案：关闭当前对话框 → 打开管理密钥 → 重新打开当前对话框（保留状态）
-
-            // 1. 保存当前表单输入到 CMSData
+            // WinUI 3 不允许在 ContentDialog 内再打开 ContentDialog。
+            // 这里仅保存状态并关闭当前对话框，外层页面负责打开密钥管理后再重新打开本对话框。
+            PendingPlainPassword = SSHPasswd.Password;
             SaveFormStateToModel(false);
-
-            // 2. 关闭当前 AddServer（调用方 HomePage 会收到 None，不执行保存）
+            ManageSSHKeysRequested = true;
             this.Hide();
-
-            // 3. 打开管理密钥对话框（在主窗口 XamlRoot 上）
-            ManageSSHKeys keyDialog = new ManageSSHKeys();
-            keyDialog.XamlRoot = App.m_window.Content.XamlRoot;
-            keyDialog.Style = Application.Current.Resources["DefaultContentDialogStyle"] as Style;
-            keyDialog.CloseButtonText = resourceLoader.GetString("Cancel");
-            await keyDialog.ShowAsync();
-
-            // 4. 重新创建 AddServer 对话框，恢复之前的状态
-            AddServer newDialog = new AddServer(CMSData);
-            newDialog.XamlRoot = App.m_window.Content.XamlRoot;
-            newDialog.Style = Application.Current.Resources["DefaultContentDialogStyle"] as Style;
-            newDialog.PrimaryButtonText = resourceLoader.GetString(
-                CMSData.Id == 0 ? "DialogAdd" : "DialogChange");
-            newDialog.CloseButtonText = resourceLoader.GetString("DialogClose");
-            newDialog.DefaultButton = ContentDialogButton.Primary;
-
-            ContentDialogResult result = await newDialog.ShowAsync();
-
-            // 5. 用户确认后直接保存并刷新首页
-            if (result == ContentDialogResult.Primary)
-            {
-                SQLiteHelper dbHelper = new SQLiteHelper();
-                if (CMSData.Id == 0)
-                {
-                    CMSData.Id = dbHelper.InsertData(CMSData);
-                }
-                else
-                {
-                    dbHelper.UpdateData(CMSData);
-                }
-                // 导航回首页触发刷新
-                App.m_window.NavigateToPage(typeof(HomePage), null);
-            }
         }
 
         /// <summary>
@@ -227,28 +197,30 @@ namespace SeeMyServer.Pages.Dialogs
                 CMSData.SSHKey = "";
                 CMSData.SSHPasswd = null;
             }
-            else if (isPrimary && SSHPasswd.Password != "" && SSHPasswd.Password != null)
+            else
             {
-                // 仅在 PrimaryButton 按下时加密密码（MyDialog_PrimaryButtonClick 的原有逻辑）
                 CMSData.SSHKeyIsOpen = "False";
-
-                string key = Method.LoadKeyFromLocalSettings();
-                string iv = Method.LoadIVFromLocalSettings();
-                if (string.IsNullOrEmpty(key) || string.IsNullOrEmpty(iv))
-                {
-                    key = Method.GenerateRandomKey();
-                    iv = Method.GenerateRandomIV();
-                    Method.SaveKeyToLocalSettings(key);
-                    Method.SaveIVToLocalSettings(iv);
-                }
-
-                SymmetricAlgorithm symmetricAlgorithm = new AesManaged();
-                symmetricAlgorithm.Key = Convert.FromBase64String(key);
-                symmetricAlgorithm.IV = Convert.FromBase64String(iv);
-                string encrypted = Method.EncryptString(SSHPasswd.Password, symmetricAlgorithm);
-                CMSData.SSHPasswd = encrypted;
                 CMSData.SSHKeyId = "";
                 CMSData.SSHKey = null;
+
+                if (isPrimary && !string.IsNullOrEmpty(SSHPasswd.Password))
+                {
+                    string key = Method.LoadKeyFromLocalSettings();
+                    string iv = Method.LoadIVFromLocalSettings();
+                    if (string.IsNullOrEmpty(key) || string.IsNullOrEmpty(iv))
+                    {
+                        key = Method.GenerateRandomKey();
+                        iv = Method.GenerateRandomIV();
+                        Method.SaveKeyToLocalSettings(key);
+                        Method.SaveIVToLocalSettings(iv);
+                    }
+
+                    SymmetricAlgorithm symmetricAlgorithm = new AesManaged();
+                    symmetricAlgorithm.Key = Convert.FromBase64String(key);
+                    symmetricAlgorithm.IV = Convert.FromBase64String(iv);
+                    string encrypted = Method.EncryptString(SSHPasswd.Password, symmetricAlgorithm);
+                    CMSData.SSHPasswd = encrypted;
+                }
             }
         }
 

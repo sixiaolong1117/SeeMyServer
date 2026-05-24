@@ -390,18 +390,7 @@ namespace SeeMyServer.Pages
         }
         private async void EditThisConfig(CMSModel cmsModel)
         {
-            // 创建一个新的dialog对象
-            AddServer dialog = new AddServer(cmsModel);
-            // 对此dialog对象进行配置
-            dialog.XamlRoot = this.XamlRoot;
-            dialog.Style = Application.Current.Resources["DefaultContentDialogStyle"] as Style;
-            dialog.PrimaryButtonText = resourceLoader.GetString("DialogChange");
-            dialog.CloseButtonText = resourceLoader.GetString("DialogClose");
-            // 默认按钮为PrimaryButton
-            dialog.DefaultButton = ContentDialogButton.Primary;
-
-            // 显示Dialog并等待其关闭
-            ContentDialogResult result = await dialog.ShowAsync();
+            ContentDialogResult result = await ShowAddServerDialogAsync(cmsModel, resourceLoader.GetString("DialogChange"));
 
             // 如果按下了Primary
             if (result == ContentDialogResult.Primary)
@@ -417,6 +406,39 @@ namespace SeeMyServer.Pages
                 NetworkInfosListView.ItemsSource = null;
                 logger.LogInfo("Edit Config is completed.");
             }
+        }
+
+        private async Task<ContentDialogResult> ShowAddServerDialogAsync(CMSModel cmsModel, string primaryButtonText)
+        {
+            string pendingPlainPassword = null;
+
+            while (true)
+            {
+                AddServer dialog = new AddServer(cmsModel, pendingPlainPassword);
+                dialog.XamlRoot = this.XamlRoot;
+                dialog.Style = Application.Current.Resources["DefaultContentDialogStyle"] as Style;
+                dialog.PrimaryButtonText = primaryButtonText;
+                dialog.CloseButtonText = resourceLoader.GetString("DialogClose");
+                dialog.DefaultButton = ContentDialogButton.Primary;
+
+                ContentDialogResult result = await dialog.ShowAsync();
+                if (!dialog.ManageSSHKeysRequested)
+                {
+                    return result;
+                }
+
+                pendingPlainPassword = dialog.PendingPlainPassword;
+                await ShowManageSSHKeysDialogAsync();
+            }
+        }
+
+        private async Task ShowManageSSHKeysDialogAsync()
+        {
+            ManageSSHKeys keyDialog = new ManageSSHKeys();
+            keyDialog.XamlRoot = this.XamlRoot;
+            keyDialog.Style = Application.Current.Resources["DefaultContentDialogStyle"] as Style;
+            keyDialog.CloseButtonText = resourceLoader.GetString("Cancel");
+            await keyDialog.ShowAsync();
         }
     }
 }

@@ -69,33 +69,34 @@ namespace SeeMyServer.Pages
         private void LoadData()
         {
             // 加载数据
-            dataList = new ObservableCollection<CMSModel>(LoadDataFromDatabase());
+            List<CMSModel> loadedData = LoadDataFromDatabase();
 
-
-            // 解析排序序列字符串为整数列表
-            List<int> sortOrder = new List<int>();
-            string sortOrderString = null;
-
-            if (localSettings.Values["DataListOrder"] as string != null && localSettings.Values["DataListOrder"] as string != "")
+            // 解析排序序列，并合并数据库中尚未写入排序设置的新配置。
+            List<int> sortOrder = LoadSortOrder();
+            if (sortOrder.Count == 0)
             {
-                sortOrderString = localSettings.Values["DataListOrder"] as string;
-                sortOrder = sortOrderString.Split(',')
-                                                     .Select(str => int.Parse(str.Trim()))
-                                                     .ToList();
+                sortOrder = loadedData.Select(item => item.Id).ToList();
             }
-            else if (dataList != null)
+            else
             {
-                // 获取当前排序序列
-                sortOrder = dataList.Select(item => item.Id).ToList();
-                // 将排序序列转换为逗号分隔的字符串
-                sortOrderString = string.Join(",", sortOrder);
-                // 将排序序列字符串保存在本地设置中
-                localSettings.Values["DataListOrder"] = sortOrderString;
+                HashSet<int> existingIds = loadedData.Select(item => item.Id).ToHashSet();
+                sortOrder = sortOrder.Where(existingIds.Contains).ToList();
+
+                HashSet<int> sortedIds = sortOrder.ToHashSet();
+                foreach (CMSModel item in loadedData)
+                {
+                    if (sortedIds.Add(item.Id))
+                    {
+                        sortOrder.Add(item.Id);
+                    }
+                }
             }
+
+            SaveSortOrder(sortOrder);
 
             // 根据排序序列对 dataList 进行排序
             dataList = new ObservableCollection<CMSModel>(sortOrder
-                                            .Select(id => dataList.FirstOrDefault(item => item.Id == id))
+                                            .Select(id => loadedData.FirstOrDefault(item => item.Id == id))
                                             .Where(item => item != null));
 
             // 添加事件处理程序
@@ -112,9 +113,30 @@ namespace SeeMyServer.Pages
                 InitItemDisplay(cmsModel);
             }
         }
+
+        private List<int> LoadSortOrder()
+        {
+            string sortOrderString = localSettings.Values["DataListOrder"] as string;
+            if (string.IsNullOrWhiteSpace(sortOrderString))
+            {
+                return new List<int>();
+            }
+
+            return sortOrderString.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                                  .Select(str => int.TryParse(str.Trim(), out int id) ? id : 0)
+                                  .Where(id => id > 0)
+                                  .Distinct()
+                                  .ToList();
+        }
+
+        private void SaveSortOrder(IEnumerable<int> sortOrder)
+        {
+            localSettings.Values["DataListOrder"] = string.Join(",", sortOrder);
+        }
+
         private void DataList_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
-            string idsString = "";
+            string idsString = string.Join(",", dataList.Select(item => item.Id));
             switch (e.Action)
             {
                 case NotifyCollectionChangedAction.Add:
@@ -123,7 +145,6 @@ namespace SeeMyServer.Pages
                     {
                         logger.LogInfo($"Id: {(item as CMSModel).Id}, Name: {(item as CMSModel).Name}");
                     }
-                    idsString = string.Join(", ", dataList.Select(item => item.Id));
                     logger.LogInfo(idsString);
                     break;
                 case NotifyCollectionChangedAction.Remove:
@@ -132,8 +153,7 @@ namespace SeeMyServer.Pages
                     {
                         logger.LogInfo($"Id: {(item as CMSModel).Id}, Name: {(item as CMSModel).Name}");
                     }
-                    //idsString = string.Join(", ", dataList.Select(item => item.Id));
-                    //logger.LogInfo(idsString);
+                    logger.LogInfo(idsString);
                     break;
                 case NotifyCollectionChangedAction.Replace:
                     logger.LogInfo("Items replaced:");
@@ -145,23 +165,20 @@ namespace SeeMyServer.Pages
                     {
                         logger.LogInfo($"Old Id: {(oldItem as CMSModel).Id}, Old Name: {(oldItem as CMSModel).Name}");
                     }
-                    idsString = string.Join(", ", dataList.Select(item => item.Id));
                     logger.LogInfo(idsString);
                     break;
                 case NotifyCollectionChangedAction.Reset:
                     logger.LogInfo("Collection reset.");
-                    idsString = string.Join(", ", dataList.Select(item => item.Id));
                     logger.LogInfo(idsString);
                     break;
                 case NotifyCollectionChangedAction.Move:
                     logger.LogInfo($"Item moved from index {e.OldStartingIndex} to index {e.NewStartingIndex}.");
-                    idsString = string.Join(", ", dataList.Select(item => item.Id));
                     logger.LogInfo(idsString);
                     break;
                 default:
                     break;
             }
-            localSettings.Values["DataListOrder"] = idsString;
+            SaveSortOrder(dataList.Select(item => item.Id));
         }
 
         private List<CMSModel> LoadDataFromDatabase()
@@ -356,18 +373,7 @@ namespace SeeMyServer.Pages
             initialCMSModelData.HostPort = "22";
             initialCMSModelData.OSType = "Linux";
 
-            // 创建一个新的dialog对象
-            AddServer dialog = new AddServer(initialCMSModelData);
-            // 对此dialog对象进行配置
-            dialog.XamlRoot = this.XamlRoot;
-            dialog.Style = Application.Current.Resources["DefaultContentDialogStyle"] as Style;
-            dialog.PrimaryButtonText = resourceLoader.GetString("DialogAdd");
-            dialog.CloseButtonText = resourceLoader.GetString("DialogClose");
-            // 默认按钮为PrimaryButton
-            dialog.DefaultButton = ContentDialogButton.Primary;
-
-            // 显示Dialog并等待其关闭
-            ContentDialogResult result = await dialog.ShowAsync();
+            ContentDialogResult result = await ShowAddServerDialogAsync(initialCMSModelData, resourceLoader.GetString("DialogAdd"));
 
             // 如果按下了Primary
             if (result == ContentDialogResult.Primary)
@@ -382,6 +388,40 @@ namespace SeeMyServer.Pages
                 logger.LogInfo("Add Config is completed.");
             }
         }
+
+        private async Task<ContentDialogResult> ShowAddServerDialogAsync(CMSModel cmsModel, string primaryButtonText)
+        {
+            string pendingPlainPassword = null;
+
+            while (true)
+            {
+                AddServer dialog = new AddServer(cmsModel, pendingPlainPassword);
+                dialog.XamlRoot = this.XamlRoot;
+                dialog.Style = Application.Current.Resources["DefaultContentDialogStyle"] as Style;
+                dialog.PrimaryButtonText = primaryButtonText;
+                dialog.CloseButtonText = resourceLoader.GetString("DialogClose");
+                dialog.DefaultButton = ContentDialogButton.Primary;
+
+                ContentDialogResult result = await dialog.ShowAsync();
+                if (!dialog.ManageSSHKeysRequested)
+                {
+                    return result;
+                }
+
+                pendingPlainPassword = dialog.PendingPlainPassword;
+                await ShowManageSSHKeysDialogAsync();
+            }
+        }
+
+        private async Task ShowManageSSHKeysDialogAsync()
+        {
+            ManageSSHKeys keyDialog = new ManageSSHKeys();
+            keyDialog.XamlRoot = this.XamlRoot;
+            keyDialog.Style = Application.Current.Resources["DefaultContentDialogStyle"] as Style;
+            keyDialog.CloseButtonText = resourceLoader.GetString("Cancel");
+            await keyDialog.ShowAsync();
+        }
+
         // 导入配置按钮点击
         private async void ImportConfig_Click(object sender, RoutedEventArgs e)
         {
@@ -409,18 +449,7 @@ namespace SeeMyServer.Pages
         }
         private async void EditThisConfig(CMSModel cmsModel)
         {
-            // 创建一个新的dialog对象
-            AddServer dialog = new AddServer(cmsModel);
-            // 对此dialog对象进行配置
-            dialog.XamlRoot = this.XamlRoot;
-            dialog.Style = Application.Current.Resources["DefaultContentDialogStyle"] as Style;
-            dialog.PrimaryButtonText = resourceLoader.GetString("DialogChange");
-            dialog.CloseButtonText = resourceLoader.GetString("DialogClose");
-            // 默认按钮为PrimaryButton
-            dialog.DefaultButton = ContentDialogButton.Primary;
-
-            // 显示Dialog并等待其关闭
-            ContentDialogResult result = await dialog.ShowAsync();
+            ContentDialogResult result = await ShowAddServerDialogAsync(cmsModel, resourceLoader.GetString("DialogChange"));
 
             // 如果按下了Primary
             if (result == ContentDialogResult.Primary)
