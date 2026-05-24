@@ -46,8 +46,8 @@ namespace SeeMyServer.Methods
                 }
 
                 bool usePrivateKey = string.Equals(cmsModel.SSHKeyIsOpen, "True", StringComparison.OrdinalIgnoreCase);
-                // 优先使用数据库中的SSHKeyId，其次使用文件路径
-                string sshKey = !string.IsNullOrEmpty(cmsModel.SSHKeyId) ? cmsModel.SSHKeyId : cmsModel.SSHKey;
+                // 仅使用数据库中的SSHKeyId（不再回退到旧版文件路径）
+                string sshKey = cmsModel.SSHKeyId;
                 // 注意使用传入的passwd，Model中的Passwd是加密后的结果
                 using (SshClient sshClient = InitializeSshClient(cmsModel.HostIP, port, cmsModel.SSHUser, passwd, sshKey, usePrivateKey))
                 {
@@ -96,26 +96,23 @@ namespace SeeMyServer.Methods
         }
 
         /// <summary>
-        /// 根据SSHKey参数加载私钥（支持文件路径和数据库ID两种方式）
+        /// 根据SSHKeyId从数据库加载私钥
         /// </summary>
         private static PrivateKeyFile LoadPrivateKeyFile(string sshKey)
         {
-            // 尝试作为数据库SSHKeyId加载（纯数字）
+            if (string.IsNullOrWhiteSpace(sshKey))
+            {
+                throw new InvalidOperationException("未配置 SSH 密钥。");
+            }
+
+            // SSHKeyId 为纯数字，从数据库加载
             if (int.TryParse(sshKey, out int keyId))
             {
                 string privateKeyContent = SSHKeyMethod.LoadPrivateKeyFromDB(sshKey);
                 return new PrivateKeyFile(new MemoryStream(Encoding.UTF8.GetBytes(privateKeyContent)));
             }
-            // 尝试作为私钥内容加载（以"-----BEGIN"开头）
-            else if (sshKey.TrimStart().StartsWith("-----BEGIN"))
-            {
-                return new PrivateKeyFile(new MemoryStream(Encoding.UTF8.GetBytes(sshKey)));
-            }
-            // 否则作为文件路径加载
-            else
-            {
-                return new PrivateKeyFile(sshKey);
-            }
+
+            throw new InvalidOperationException("无法识别的 SSH 密钥格式，请在编辑中重新选择密钥。");
         }
 
         private static string[] ExecuteSshCommands(SshClient sshClient, string[] sshCommands)
@@ -250,14 +247,14 @@ namespace SeeMyServer.Methods
                 }
 
                 // 将数据序列化为 JSON 格式
-                //string jsonData = JsonConvert.SerializeObject(cmsModel);
+                // 注意：不再导出 SSHKey（旧版文件路径），也不导出 SSHPasswd 和 SSHKeyId
+                // 导入旧配置文件时，SSHKey 字段仍会被兼容读取
                 var jsonData = JsonConvert.SerializeObject(new
                 {
                     cmsModel.Name,
                     cmsModel.HostIP,
                     cmsModel.HostPort,
                     cmsModel.SSHUser,
-                    cmsModel.SSHKey,
                     cmsModel.OSType,
                     cmsModel.SSHKeyIsOpen,
                     cmsModel.CPUUsage,
@@ -1262,11 +1259,11 @@ namespace SeeMyServer.Methods
         }
 
         /// <summary>
-        /// 根据CMSModel获取SSH密钥文件路径（优先从数据库读取并写入临时文件）
+        /// 根据CMSModel获取SSH密钥文件路径（从数据库读取并写入临时文件）
         /// </summary>
         public static string GetSSHKeyFilePath(CMSModel cmsModel)
         {
-            // 优先使用SSHKeyId从数据库读取
+            // 使用SSHKeyId从数据库读取
             if (!string.IsNullOrEmpty(cmsModel.SSHKeyId) && int.TryParse(cmsModel.SSHKeyId, out int keyId))
             {
                 string privateKeyContent = SSHKeyMethod.LoadPrivateKeyFromDB(cmsModel.SSHKeyId);
@@ -1278,33 +1275,7 @@ namespace SeeMyServer.Methods
                 }
             }
 
-            // 回退：尝试将SSHKey作为文件路径使用（兼容旧数据）
-            if (!string.IsNullOrEmpty(cmsModel.SSHKey) && File.Exists(cmsModel.SSHKey))
-            {
-                return cmsModel.SSHKey;
-            }
-
-            // 回退：尝试将SSHKey作为私钥内容，写入临时文件
-            if (!string.IsNullOrEmpty(cmsModel.SSHKey) && cmsModel.SSHKey.TrimStart().StartsWith("-----BEGIN"))
-            {
-                string tempKeyPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"SeeMyServer_SSHKey_{Guid.NewGuid():N}");
-                File.WriteAllText(tempKeyPath, cmsModel.SSHKey);
-                return tempKeyPath;
-            }
-
-            // 最后回退：尝试将SSHKey作为ID从数据库加载
-            if (int.TryParse(cmsModel.SSHKey, out int legacyKeyId))
-            {
-                string privateKeyContent = SSHKeyMethod.LoadPrivateKeyFromDB(legacyKeyId.ToString());
-                if (!string.IsNullOrEmpty(privateKeyContent))
-                {
-                    string tempKeyPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"SeeMyServer_SSHKey_{legacyKeyId}");
-                    File.WriteAllText(tempKeyPath, privateKeyContent);
-                    return tempKeyPath;
-                }
-            }
-
-            return cmsModel.SSHKey ?? "";
+            return "";
         }
     }
 }
