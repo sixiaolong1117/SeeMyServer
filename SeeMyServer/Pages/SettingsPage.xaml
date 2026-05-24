@@ -185,6 +185,7 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
@@ -225,6 +226,41 @@
                     HorizontalAlignment="Right"
                     VerticalAlignment="Center"
                     Click="ManageSSHKeysButton_Click" />
+            </Grid>
+            <Grid
+                Grid.Row="2"
+                Margin="24,1,24,0"
+                Padding="28,16,28,16"
+                Background="{ThemeResource SystemControlBackgroundAltMediumLowBrush}"
+                BorderThickness="0"
+                CornerRadius="0,0,4,4">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" MinWidth="60" />
+                </Grid.ColumnDefinitions>
+                <FontIcon
+                    Grid.Column="0"
+                    VerticalAlignment="Center"
+                    FontFamily="Segoe Fluent Icons"
+                    Glyph="&#xE8D4;" />
+                <TextBlock
+                    x:Uid="WindowsHelloSetting"
+                    Grid.Column="1"
+                    Margin="16,0,0,0"
+                    VerticalAlignment="Center" />
+                <ToggleSwitch
+                    x:Name="WindowsHelloToggle"
+                    Grid.Column="2"
+                    Margin="0,0,-113,0"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center"
+                    OffContent=""
+                    OnContent=""
+                    Toggled="WindowsHelloToggle_Toggled" />
             </Grid>
         </Grid>
 

@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using Windows.ApplicationModel.Resources;
 using SeeMyServer.Datas;
+using SeeMyServer.Helper;
 using SeeMyServer.Methods;
 using SeeMyServer.Models;
 
@@ -52,14 +53,23 @@ namespace SeeMyServer.Pages.Dialogs
             }
         }
 
-        private void DeleteSSHKey_Click(object sender, RoutedEventArgs e)
+        private async void ConfirmDeleteSSHKey_Click(object sender, RoutedEventArgs e)
         {
+            if (!await WindowsHelloHelper.VerifyAsync(resourceLoader.GetString("WindowsHelloVerifyMessage")))
+                return;
+
             if (SSHKeyListView.SelectedItem is SSHKeyModel selectedKey)
             {
+                DeleteConfirmFlyout.Hide();
                 SQLiteHelper dbHelper = new SQLiteHelper();
                 dbHelper.DeleteSSHKey(selectedKey.Id);
                 LoadSSHKeys();
             }
+        }
+
+        private void CancelDeleteSSHKey_Click(object sender, RoutedEventArgs e)
+        {
+            DeleteConfirmFlyout.Hide();
         }
 
         private void SSHKeyListView_SelectionChanged(object sender, SelectionChangedEventArgs e)

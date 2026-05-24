@@ -24,6 +24,7 @@ namespace SeeMyServer.Pages
             InitializeLosesFocus();
             materialStatusSet();
             languageStatusSet();
+            WindowsHelloStatusSet();
         }
         // 材料ComboBox列表List
         public List<string> material { get; } = new List<string>()
@@ -201,6 +202,9 @@ namespace SeeMyServer.Pages
 
         private async void ManageSSHKeysButton_Click(object sender, RoutedEventArgs e)
         {
+            if (!await WindowsHelloHelper.VerifyAsync(resourceLoader.GetString("WindowsHelloVerifyMessage")))
+                return;
+
             ManageSSHKeys dialog = new ManageSSHKeys();
             dialog.XamlRoot = this.XamlRoot;
             dialog.Style = Application.Current.Resources["DefaultContentDialogStyle"] as Style;
@@ -218,6 +222,59 @@ namespace SeeMyServer.Pages
         {
             Logger logger = new Logger(1);
             logger.ClearLog();
+        }
+
+        private void WindowsHelloStatusSet()
+        {
+            // 初始化 ToggleSwitch 状态，先解绑事件防止触发
+            WindowsHelloToggle.Toggled -= WindowsHelloToggle_Toggled;
+            WindowsHelloToggle.IsOn = WindowsHelloHelper.IsEnabled;
+            WindowsHelloToggle.Toggled += WindowsHelloToggle_Toggled;
+        }
+
+        private async void WindowsHelloToggle_Toggled(object sender, RoutedEventArgs e)
+        {
+            // 防止初始化时触发
+            if (WindowsHelloToggle == null)
+                return;
+
+            bool targetState = WindowsHelloToggle.IsOn;
+
+            // 先检查设备是否支持
+            if (!await WindowsHelloHelper.IsAvailableAsync())
+            {
+                WindowsHelloToggle.Toggled -= WindowsHelloToggle_Toggled;
+                WindowsHelloToggle.IsOn = WindowsHelloHelper.IsEnabled;
+                WindowsHelloToggle.Toggled += WindowsHelloToggle_Toggled;
+                return;
+            }
+
+            if (targetState && !WindowsHelloHelper.IsEnabled)
+            {
+                // 用户想要开启 → 验证身份
+                bool success = await WindowsHelloHelper.EnableAsync(
+                    resourceLoader.GetString("WindowsHelloVerifyMessage"));
+                if (!success)
+                {
+                    // 验证失败，恢复关闭状态
+                    WindowsHelloToggle.Toggled -= WindowsHelloToggle_Toggled;
+                    WindowsHelloToggle.IsOn = false;
+                    WindowsHelloToggle.Toggled += WindowsHelloToggle_Toggled;
+                }
+            }
+            else if (!targetState && WindowsHelloHelper.IsEnabled)
+            {
+                // 用户想要关闭 → 验证身份
+                bool success = await WindowsHelloHelper.DisableAsync(
+                    resourceLoader.GetString("WindowsHelloVerifyMessage"));
+                if (!success)
+                {
+                    // 验证失败，恢复开启状态
+                    WindowsHelloToggle.Toggled -= WindowsHelloToggle_Toggled;
+                    WindowsHelloToggle.IsOn = true;
+                    WindowsHelloToggle.Toggled += WindowsHelloToggle_Toggled;
+                }
+            }
         }
     }
 }

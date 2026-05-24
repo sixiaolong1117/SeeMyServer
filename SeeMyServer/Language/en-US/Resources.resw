@@ -369,6 +369,12 @@
   <data name="ManageSSHKeysButton.Content" xml:space="preserve">
     <value>Manage</value>
   </data>
+  <data name="WindowsHelloSetting.Text" xml:space="preserve">
+    <value>Windows Hello Protection</value>
+  </data>
+  <data name="WindowsHelloVerifyMessage" xml:space="preserve">
+    <value>Please verify your identity to manage SSH keys</value>
+  </data>
   <data name="ManageSSHKeysDialogTitle.Text" xml:space="preserve">
     <value>SSH Key Management</value>
   </data>
@@ -386,6 +392,15 @@
   </data>
   <data name="DeleteSSHKeyButton.Content" xml:space="preserve">
     <value>Delete Key</value>
+  </data>
+  <data name="DeleteSSHKeyConfirmContent.Text" xml:space="preserve">
+    <value>Delete this key? This action cannot be undone.</value>
+  </data>
+  <data name="DeleteSSHKeyConfirmCancelButton.Content" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="DeleteSSHKeyConfirmPrimaryButton.Content" xml:space="preserve">
+    <value>Delete</value>
   </data>
   <data name="ManageSSHKeysNavButton.Content" xml:space="preserve">
     <value>Manage Keys</value>

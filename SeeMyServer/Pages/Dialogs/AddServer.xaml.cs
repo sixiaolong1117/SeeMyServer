@@ -144,8 +144,13 @@ namespace SeeMyServer.Pages.Dialogs
         //    }
         //}
 
-        private void DeleteSSHKey_Click(object sender, RoutedEventArgs e)
+        private async void DeleteSSHKey_Click(object sender, RoutedEventArgs e)
         {
+            // 注意：此按钮在 XAML 中已注释。如需启用，建议改为 Flyout 确认模式
+            // （与 ManageSSHKeys 一致），避免 ContentDialog 嵌套问题。
+            if (!await WindowsHelloHelper.VerifyAsync(resourceLoader.GetString("WindowsHelloVerifyMessage")))
+                return;
+
             if (SSHKeyComboBox.SelectedItem is SSHKeyModel selectedKey)
             {
                 SQLiteHelper dbHelper = new SQLiteHelper();
@@ -156,6 +161,10 @@ namespace SeeMyServer.Pages.Dialogs
 
         private async void ManageSSHKeysNav_Click(object sender, RoutedEventArgs e)
         {
+            // Windows Hello 鉴权
+            if (!await WindowsHelloHelper.VerifyAsync(resourceLoader.GetString("WindowsHelloVerifyMessage")))
+                return;
+
             // WinUI 3 不允许在 ContentDialog 内再打开 ContentDialog
             // 方案：关闭当前对话框 → 打开管理密钥 → 重新打开当前对话框（保留状态）
 

@@ -351,6 +351,12 @@
   <data name="ManageSSHKeysButton.Content" xml:space="preserve">
     <value>管理</value>
   </data>
+  <data name="WindowsHelloSetting.Text" xml:space="preserve">
+    <value>Windows Hello 安全保护</value>
+  </data>
+  <data name="WindowsHelloVerifyMessage" xml:space="preserve">
+    <value>请验证身份以继续操作 SSH 密钥</value>
+  </data>
   <data name="ManageSSHKeysDialogTitle.Text" xml:space="preserve">
     <value>SSH 密钥管理</value>
   </data>
@@ -368,6 +374,15 @@
   </data>
   <data name="DeleteSSHKeyButton.Content" xml:space="preserve">
     <value>删除密钥</value>
+  </data>
+  <data name="DeleteSSHKeyConfirmContent.Text" xml:space="preserve">
+    <value>确定要删除此密钥吗？此操作不可撤销。</value>
+  </data>
+  <data name="DeleteSSHKeyConfirmCancelButton.Content" xml:space="preserve">
+    <value>取消</value>
+  </data>
+  <data name="DeleteSSHKeyConfirmPrimaryButton.Content" xml:space="preserve">
+    <value>删除</value>
   </data>
   <data name="ManageSSHKeysNavButton.Content" xml:space="preserve">
     <value>管理密钥</value>

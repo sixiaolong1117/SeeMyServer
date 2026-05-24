@@ -119,8 +119,19 @@
             </Button>
             <Button
                 x:Name="DeleteSSHKeyButton"
-                x:Uid="DeleteSSHKeyButton"
-                Click="DeleteSSHKey_Click" />
+                x:Uid="DeleteSSHKeyButton">
+                <Button.Flyout>
+                    <Flyout x:Name="DeleteConfirmFlyout">
+                        <StackPanel>
+                            <TextBlock x:Uid="DeleteSSHKeyConfirmContent" Margin="0,0,0,8" />
+                            <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+                                <Button x:Uid="DeleteSSHKeyConfirmCancelButton" Margin="0,0,8,0" Click="CancelDeleteSSHKey_Click" />
+                                <Button x:Uid="DeleteSSHKeyConfirmPrimaryButton" Click="ConfirmDeleteSSHKey_Click" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Flyout>
+                </Button.Flyout>
+            </Button>
         </StackPanel>
     </Grid>
 </ContentDialog>
