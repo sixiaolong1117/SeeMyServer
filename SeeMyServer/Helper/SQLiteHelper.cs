@@ -1,4 +1,4 @@
-﻿using Microsoft.Data.Sqlite;
+using Microsoft.Data.Sqlite;
 using SeeMyServer.Methods;
 using SeeMyServer.Models;
 using System;
@@ -11,7 +11,7 @@ namespace SeeMyServer.Datas
     public class SQLiteHelper
     {
         // 数据库版本号
-        int DatabaseVersion = 2;
+        int DatabaseVersion = 3;
 
         // 连接到数据库文件
         private string connectionString = "Data Source=cms.db";
@@ -148,6 +148,12 @@ namespace SeeMyServer.Datas
 
                     // 回填SSHKey元数据（公钥、指纹）
                     BackfillSSHKeyMetadata(connection);
+                }
+
+                // 升级到版本3：将SSH密钥从旧DPAPI描述符迁移到新描述符
+                if (currentVersion < 3)
+                {
+                    MigrateSSHKeyEncryption(connection);
                 }
 
                 // 更新数据库版本信息
@@ -556,6 +562,47 @@ namespace SeeMyServer.Datas
                 catch
                 {
                     // 旧数据无法解析时保留原记录，用户可删除后重新导入。
+                }
+            }
+        }
+
+        // 将SSH密钥从旧DPAPI描述符迁移到新描述符（LOCAL=user → LOCAL=user AND LOCAL=MACHINE）
+        private static void MigrateSSHKeyEncryption(SqliteConnection connection)
+        {
+            var selectCommand = connection.CreateCommand();
+            selectCommand.CommandText = "SELECT Id, PrivateKey FROM SSHKeyTable WHERE PrivateKey IS NOT NULL AND PrivateKey <> ''";
+
+            var migrated = 0;
+            var skipped = 0;
+            using (SqliteDataReader reader = selectCommand.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    int id = reader.GetInt32(0);
+                    string encryptedKey = reader.GetString(1);
+
+                    if (!SSHKeyProtection.IsLegacyEncrypted(encryptedKey))
+                    {
+                        skipped++;
+                        continue;
+                    }
+
+                    try
+                    {
+                        string reEncrypted = SSHKeyProtection.ReProtect(encryptedKey);
+                        using (var updateCommand = connection.CreateCommand())
+                        {
+                            updateCommand.CommandText = "UPDATE SSHKeyTable SET PrivateKey = @PrivateKey WHERE Id = @Id";
+                            updateCommand.Parameters.AddWithValue("@Id", id);
+                            updateCommand.Parameters.AddWithValue("@PrivateKey", reEncrypted);
+                            updateCommand.ExecuteNonQuery();
+                        }
+                        migrated++;
+                    }
+                    catch
+                    {
+                        // 无法迁移的密钥保留原状，Unprotect 会回退到旧描述符解密
+                    }
                 }
             }
         }

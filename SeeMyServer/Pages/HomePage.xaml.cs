@@ -514,9 +514,11 @@ namespace SeeMyServer.Pages
                 {
                     Text = resourceLoader.GetString("terminalMenuItemText")
                 };
-                terminalMenuItem.Click += (sender, e) =>
+                terminalMenuItem.Click += async (sender, e) =>
                 {
-                    Method.SSHTerminal(selectedItem);
+                    var dialog = new TerminalDialog(selectedItem);
+                    dialog.XamlRoot = this.XamlRoot;
+                    await dialog.ShowAsync();
                 };
                 menuFlyout.Items.Add(terminalMenuItem);
 

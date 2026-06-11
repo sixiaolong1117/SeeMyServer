@@ -109,7 +109,16 @@ namespace SeeMyServer.Methods
             if (int.TryParse(sshKey, out int keyId))
             {
                 string privateKeyContent = SSHKeyMethod.LoadPrivateKeyFromDB(sshKey);
-                return new PrivateKeyFile(new MemoryStream(Encoding.UTF8.GetBytes(privateKeyContent)));
+                byte[] keyBytes = Encoding.UTF8.GetBytes(privateKeyContent);
+                var keyStream = new MemoryStream(keyBytes, 0, keyBytes.Length, false, true);
+                var keyFile = new PrivateKeyFile(keyStream);
+                keyFile.Dispose();
+                keyStream.Dispose();
+                Array.Clear(keyBytes, 0, keyBytes.Length);
+                privateKeyContent = null;
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                return keyFile;
             }
 
             throw new InvalidOperationException("无法识别的 SSH 密钥格式，请在编辑中重新选择密钥。");
@@ -1239,53 +1248,24 @@ namespace SeeMyServer.Methods
             return Convert.ToBase64String(iv);
         }
 
-        public static void SSHTerminal(CMSModel cmsModel)
-        {
-            //string KeyPath, string User, string Domain, string Port
-            // 创建一个新的进程
-            Process process = new Process();
-            // 指定运行PowerShell
-            process.StartInfo.FileName = "PowerShell.exe";
-            // 命令
-            if (cmsModel.SSHKeyIsOpen == "True")
-            {
-                string keyPath = GetSSHKeyFilePath(cmsModel);
-                process.StartInfo.Arguments = $"-NoExit ssh -i \"{keyPath}\" {cmsModel.SSHUser}@{cmsModel.HostIP} -p {cmsModel.HostPort}";
-            }
-            else
-            {
-                process.StartInfo.Arguments = $"-NoExit ssh {cmsModel.SSHUser}@{cmsModel.HostIP} -p {cmsModel.HostPort}";
-            }
-            // 是否使用操作系统shell启动
-            process.StartInfo.UseShellExecute = false;
-            // 是否在新窗口中启动该进程的值 (不显示程序窗口)
-            process.StartInfo.CreateNoWindow = false;
-            // 进程开始
-            process.Start();
-            // 等待执行结束
-            //process.WaitForExit();
-            // 进程关闭
-            process.Close();
-        }
-
         /// <summary>
-        /// 根据CMSModel获取SSH密钥文件路径（从数据库读取并写入临时文件）
+        /// 清理遗留的临时私钥文件（兼容旧版本残留）
         /// </summary>
-        public static string GetSSHKeyFilePath(CMSModel cmsModel)
+        public static void CleanupTempSSHKeys()
         {
-            // 使用SSHKeyId从数据库读取
-            if (!string.IsNullOrEmpty(cmsModel.SSHKeyId) && int.TryParse(cmsModel.SSHKeyId, out int keyId))
+            try
             {
-                string privateKeyContent = SSHKeyMethod.LoadPrivateKeyFromDB(cmsModel.SSHKeyId);
-                if (!string.IsNullOrEmpty(privateKeyContent))
+                string tempDir = System.IO.Path.GetTempPath();
+                foreach (string file in Directory.GetFiles(tempDir, "SeeMyServer_sshadd_*"))
                 {
-                    string tempKeyPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"SeeMyServer_SSHKey_{keyId}");
-                    File.WriteAllText(tempKeyPath, privateKeyContent);
-                    return tempKeyPath;
+                    try { File.Delete(file); } catch { }
+                }
+                foreach (string file in Directory.GetFiles(tempDir, "SeeMyServer_SSHKey_*"))
+                {
+                    try { File.Delete(file); } catch { }
                 }
             }
-
-            return "";
+            catch { }
         }
     }
 }

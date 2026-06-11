@@ -374,10 +374,11 @@ namespace SeeMyServer.Pages
 
             await Task.WhenAll(tasks);
         }
-        private void OpenSSHTerminal_Click(object sender, RoutedEventArgs e)
+        private async void OpenSSHTerminal_Click(object sender, RoutedEventArgs e)
         {
-            // dataList.SSHKey, dataList.SSHUser, dataList.HostIP, dataList.HostPort
-            Method.SSHTerminal(dataList);
+            var dialog = new TerminalDialog(dataList);
+            dialog.XamlRoot = this.XamlRoot;
+            await dialog.ShowAsync();
             logger.LogInfo("OpenSSHTerminal() completed.");
         }
         private void EditConfig_Click(object sender, RoutedEventArgs e)

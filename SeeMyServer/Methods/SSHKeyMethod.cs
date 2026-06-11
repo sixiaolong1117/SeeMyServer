@@ -67,8 +67,10 @@ namespace SeeMyServer.Methods
 
         private static KeyMetadata GetKeyMetadata(string privateKey)
         {
-            using (MemoryStream privateKeyStream = new MemoryStream(Encoding.UTF8.GetBytes(privateKey)))
-            using (PrivateKeyFile privateKeyFile = new PrivateKeyFile(privateKeyStream))
+            byte[] keyBytes = Encoding.UTF8.GetBytes(privateKey);
+            MemoryStream privateKeyStream = new MemoryStream(keyBytes, 0, keyBytes.Length, false, true);
+            PrivateKeyFile privateKeyFile = new PrivateKeyFile(privateKeyStream);
+            try
             {
                 HostAlgorithm hostAlgorithm = GetPublicKeyHostAlgorithm(privateKeyFile);
                 string comment = privateKeyFile.Key.Comment;
@@ -91,6 +93,12 @@ namespace SeeMyServer.Methods
                         Fingerprint = fingerprint
                     };
                 }
+            }
+            finally
+            {
+                privateKeyFile.Dispose();
+                privateKeyStream.Dispose();
+                Array.Clear(keyBytes, 0, keyBytes.Length);
             }
         }
 

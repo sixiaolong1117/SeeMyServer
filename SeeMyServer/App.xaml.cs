@@ -1,5 +1,6 @@
-﻿using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml;
 using SeeMyServer.Helper;
+using SeeMyServer.Methods;
 using System;
 using Microsoft.Windows.AppLifecycle;
 using Microsoft.Windows.ApplicationModel.Resources;
@@ -68,6 +69,9 @@ namespace SeeMyServer
 
             // 记录启动日志
             logger.LogInfo("ServerDash starts.");
+
+            // 清理遗留的临时私钥文件
+            Method.CleanupTempSSHKeys();
 
             // 激活窗口
             m_window.Activate();

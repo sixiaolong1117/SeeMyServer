@@ -10,7 +10,7 @@
   <Identity
     Name="53093SIXiaolong.ServerDash"
     Publisher="CN=C2E30F83-9FC0-4E81-A5EE-358CB57A431B"
-    Version="1.1.1.0" />
+    Version="1.2.3.0" />
 
   <mp:PhoneIdentity PhoneProductId="a0759bd2-846c-4431-a3ab-2d9d607663cd" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
