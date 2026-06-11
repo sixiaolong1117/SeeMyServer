@@ -1,4 +1,4 @@
-﻿using Microsoft.UI.Xaml.Shapes;
+using Microsoft.UI.Xaml.Shapes;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PInvoke;
@@ -346,7 +346,7 @@ namespace SeeMyServer.Methods
         {
             List<List<string>> cpuUsageList = new List<List<string>>();
             List<List<string>> cpuUsageList0s = new List<List<string>>();
-            List<List<int>> cpuUsageListAbs = new List<List<int>>();
+            List<List<long>> cpuUsageListAbs = new List<List<long>>();
 
             // 解析结果
             if (CPUUsagesRev.StartsWith("cpu"))
@@ -375,16 +375,19 @@ namespace SeeMyServer.Methods
                             }
                         }
 
-                        cpuUsage.Add(fields[1]);    //0 用户态
-                        cpuUsage.Add(fields[2]);    //1 用户态低优先级
-                        cpuUsage.Add(fields[3]);    //2 系统态
-                        cpuUsage.Add(fields[4]);    //3 空闲
-                        cpuUsage.Add(fields[5]);    //4 I/O等待
-                        cpuUsage.Add(fields[6]);    //5 无意义
-                        cpuUsage.Add(fields[7]);    //6 硬件中断
-                        cpuUsage.Add(fields[8]);    //7 软件中断
-                        cpuUsage.Add(fields[9]);    //8 steal_time
-                        cpuUsage.Add(fields[10]);   //9 guest_nice进程
+                        // 安全访问字段，缺失的字段默认为"0"
+                        string GetField(int index) => index < fields.Length ? fields[index] : "0";
+
+                        cpuUsage.Add(GetField(1));    //0 用户态
+                        cpuUsage.Add(GetField(2));    //1 用户态低优先级
+                        cpuUsage.Add(GetField(3));    //2 系统态
+                        cpuUsage.Add(GetField(4));    //3 空闲
+                        cpuUsage.Add(GetField(5));    //4 I/O等待
+                        cpuUsage.Add(GetField(6));    //5 无意义
+                        cpuUsage.Add(GetField(7));    //6 硬件中断
+                        cpuUsage.Add(GetField(8));    //7 软件中断
+                        cpuUsage.Add(GetField(9));    //8 steal_time
+                        cpuUsage.Add(GetField(10));   //9 guest_nice进程
                         cpuUsage.Add($"{totalCpuTime}"); //10 总时间
 
                         cpuUsageList0s.Add(cpuUsage);
@@ -407,7 +410,7 @@ namespace SeeMyServer.Methods
                         string[] fields = line.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 
                         // 保存当前 CPU 的使用情况
-                        List<int> cpuUsage = new List<int>();
+                        List<long> cpuUsage = new List<long>();
 
                         // 计算CPU总事件（单行之和）
                         long totalCpuTime = 0;
@@ -419,18 +422,22 @@ namespace SeeMyServer.Methods
                             }
                         }
 
-                        // 计算差值
-                        cpuUsage.Add(Math.Abs(int.Parse(cpuUsageList0s[index][0]) - int.Parse(fields[1])));    //0 用户态
-                        cpuUsage.Add(Math.Abs(int.Parse(cpuUsageList0s[index][1]) - int.Parse(fields[2])));    //1 用户态低优先级
-                        cpuUsage.Add(Math.Abs(int.Parse(cpuUsageList0s[index][2]) - int.Parse(fields[3])));    //2 系统态
-                        cpuUsage.Add(Math.Abs(int.Parse(cpuUsageList0s[index][3]) - int.Parse(fields[4])));    //3 空闲
-                        cpuUsage.Add(Math.Abs(int.Parse(cpuUsageList0s[index][4]) - int.Parse(fields[5])));    //4 I/O等待
-                        cpuUsage.Add(Math.Abs(int.Parse(cpuUsageList0s[index][5]) - int.Parse(fields[6])));    //5 无意义
-                        cpuUsage.Add(Math.Abs(int.Parse(cpuUsageList0s[index][6]) - int.Parse(fields[7])));    //6 硬件中断
-                        cpuUsage.Add(Math.Abs(int.Parse(cpuUsageList0s[index][7]) - int.Parse(fields[8])));    //7 软件中断
-                        cpuUsage.Add(Math.Abs(int.Parse(cpuUsageList0s[index][8]) - int.Parse(fields[9])));    //8 steal_time
-                        cpuUsage.Add(Math.Abs(int.Parse(cpuUsageList0s[index][9]) - int.Parse(fields[10])));   //9 guest_nice进程
-                        cpuUsage.Add(Math.Abs(int.Parse(cpuUsageList0s[index][10]) - (int)totalCpuTime));      //10 总时间
+                        // 安全获取字段值，缺失的字段默认为"0"
+                        long SafeParse(string s) => long.TryParse(s, out long v) ? v : 0L;
+                        long SafeParseField(int idx) => idx < fields.Length ? SafeParse(fields[idx]) : 0L;
+
+                        // 计算差值（使用 long 防止溢出）
+                        cpuUsage.Add(Math.Abs(SafeParse(cpuUsageList0s[index][0]) - SafeParseField(1)));    //0 用户态
+                        cpuUsage.Add(Math.Abs(SafeParse(cpuUsageList0s[index][1]) - SafeParseField(2)));    //1 用户态低优先级
+                        cpuUsage.Add(Math.Abs(SafeParse(cpuUsageList0s[index][2]) - SafeParseField(3)));    //2 系统态
+                        cpuUsage.Add(Math.Abs(SafeParse(cpuUsageList0s[index][3]) - SafeParseField(4)));    //3 空闲
+                        cpuUsage.Add(Math.Abs(SafeParse(cpuUsageList0s[index][4]) - SafeParseField(5)));    //4 I/O等待
+                        cpuUsage.Add(Math.Abs(SafeParse(cpuUsageList0s[index][5]) - SafeParseField(6)));    //5 无意义
+                        cpuUsage.Add(Math.Abs(SafeParse(cpuUsageList0s[index][6]) - SafeParseField(7)));    //6 硬件中断
+                        cpuUsage.Add(Math.Abs(SafeParse(cpuUsageList0s[index][7]) - SafeParseField(8)));    //7 软件中断
+                        cpuUsage.Add(Math.Abs(SafeParse(cpuUsageList0s[index][8]) - SafeParseField(9)));    //8 steal_time
+                        cpuUsage.Add(Math.Abs(SafeParse(cpuUsageList0s[index][9]) - SafeParseField(10)));   //9 guest_nice进程
+                        cpuUsage.Add(Math.Abs(SafeParse(cpuUsageList0s[index][10]) - totalCpuTime));       //10 总时间
 
                         cpuUsageListAbs.Add(cpuUsage);
 
@@ -440,7 +447,7 @@ namespace SeeMyServer.Methods
             }
 
             // 计算占用率
-            foreach (List<int> cpuUsageAbs in cpuUsageListAbs)
+            foreach (List<long> cpuUsageAbs in cpuUsageListAbs)
             {
                 // 保存当前 CPU 的使用情况
                 List<string> cpuUsage = new List<string>();
@@ -692,76 +699,79 @@ namespace SeeMyServer.Methods
             string[] result = await SendSSHCommandAsync(CPUUsageCMD, cmsModel);
             // 开始计时
             stopwatch.Start();
-            if (result != null)
+            try
             {
-                string CPUUsagesRev = result[0];
-                string MEMUsagesRev = result[1];
-                string NETUsagesRev = result[2];
-                string DFUsagesRev = result[3];
-                string UptimeRev = result[4];
-                string HostnameRev = result[5];
-                string TopRev = result[6];
-                string CoreNumRev = result[7];
-                string OSReleaseRev = result[8];
-                string DiskStatsRev = result[9];
-                string LinuxKernelVersion = result[10];
-
-                await Task.Delay(1000);
-
-                string[] result2 = await SendSSHCommandAsync(CPUUsageCMD, cmsModel);
-                // 停止计时
-                stopwatch.Stop();
-
-                if (result2 != null)
+                if (result != null)
                 {
+                    string CPUUsagesRev = result[0];
+                    string MEMUsagesRev = result[1];
+                    string NETUsagesRev = result[2];
+                    string DFUsagesRev = result[3];
+                    string UptimeRev = result[4];
+                    string HostnameRev = result[5];
+                    string TopRev = result[6];
+                    string CoreNumRev = result[7];
+                    string OSReleaseRev = result[8];
+                    string DiskStatsRev = result[9];
+                    string LinuxKernelVersion = result[10];
 
-                    string CPUUsagesRev2 = result2[0];
-                    string MEMUsagesRev2 = result2[1];
-                    string NETUsagesRev2 = result2[2];
-                    string DFUsagesRev2 = result2[3];
-                    string UptimeRev2 = result2[4];
-                    string HostnameRev2 = result2[5];
-                    string TopRev2 = result2[6];
-                    string CoreNumRev2 = result2[7];
-                    string OSReleaseRev2 = result2[8];
-                    string DiskStatsRev2 = result2[9];
-                    string LinuxKernelVersion2 = result2[10];
+                    await Task.Delay(1000);
 
-                    // CPU占用
-                    cpuUsageList = CPUUsageResult(CPUUsagesRev, CPUUsagesRev2);
-                    // 内存和swap占用
-                    parsedResults = MemUsageResult(MEMUsagesRev);
-                    // 网卡信息
-                    networkInterfaceInfos = NetworkInterfaceInfosResult(NETUsagesRev, NETUsagesRev2, stopwatch);
-                    // 挂载信息
-                    mountInfos = MountInfosResult(DFUsagesRev, DiskStatsRev, DiskStatsRev2, stopwatch);
-                    // 启动时长、主机名、CPU核心数量、系统版本、top
-                    aboutInfo = await AboutInfoResult(HostnameRev, UptimeRev, CoreNumRev, OSReleaseRev, TopRev, LinuxKernelVersion, cmsModel);
-                    // 负载信息
-                    loadResults = LoadAverageResult(CoreNumRev, TopRev);
+                    string[] result2 = await SendSSHCommandAsync(CPUUsageCMD, cmsModel);
+                    // 停止计时
+                    stopwatch.Stop();
+
+                    if (result2 != null)
+                    {
+
+                        string CPUUsagesRev2 = result2[0];
+                        string MEMUsagesRev2 = result2[1];
+                        string NETUsagesRev2 = result2[2];
+                        string DFUsagesRev2 = result2[3];
+                        string UptimeRev2 = result2[4];
+                        string HostnameRev2 = result2[5];
+                        string TopRev2 = result2[6];
+                        string CoreNumRev2 = result2[7];
+                        string OSReleaseRev2 = result2[8];
+                        string DiskStatsRev2 = result2[9];
+                        string LinuxKernelVersion2 = result2[10];
+
+                        // CPU占用
+                        cpuUsageList = CPUUsageResult(CPUUsagesRev, CPUUsagesRev2);
+                        // 内存和swap占用
+                        parsedResults = MemUsageResult(MEMUsagesRev);
+                        // 网卡信息
+                        networkInterfaceInfos = NetworkInterfaceInfosResult(NETUsagesRev, NETUsagesRev2, stopwatch);
+                        // 挂载信息
+                        mountInfos = MountInfosResult(DFUsagesRev, DiskStatsRev, DiskStatsRev2, stopwatch);
+                        // 启动时长、主机名、CPU核心数量、系统版本、top
+                        aboutInfo = await AboutInfoResult(HostnameRev, UptimeRev, CoreNumRev, OSReleaseRev, TopRev, LinuxKernelVersion, cmsModel);
+                        // 负载信息
+                        loadResults = LoadAverageResult(CoreNumRev, TopRev);
+                    }
+                    else
+                    {
+                        logger.LogError("The number of elements in the SSH result array is incorrect.");
+                        logger.LogError(string.Join("\n\n", result));
+                    }
+
+                    return Tuple.Create(cpuUsageList, parsedResults, networkInterfaceInfos, mountInfos, aboutInfo, loadResults);
                 }
                 else
                 {
-                    logger.LogError("The number of elements in the SSH result array is incorrect.");
-                    logger.LogError(string.Join("\n\n", result));
+                    // 停止计时
+                    stopwatch.Stop();
+
+                    // 失败倒计时，设置为60
+                    cmsModel.NumberOfFailuresSec = 60;
+                    logger.LogError("SSH results array is null.");
+                    return null;
                 }
-
-
-                // 确保释放信号量
-                cmsModel.UpdateSemaphore.Release();
-                return Tuple.Create(cpuUsageList, parsedResults, networkInterfaceInfos, mountInfos, aboutInfo, loadResults);
             }
-            else
+            finally
             {
-                // 停止计时
-                stopwatch.Stop();
-
-                // 失败倒计时，设置为60
-                cmsModel.NumberOfFailuresSec = 60;
-                logger.LogError("SSH results array is null.");
                 // 确保释放信号量
                 cmsModel.UpdateSemaphore.Release();
-                return null;
             }
         }
 

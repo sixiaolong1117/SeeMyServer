@@ -1,4 +1,4 @@
-﻿using Microsoft.UI.Dispatching;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
@@ -263,7 +263,7 @@ namespace SeeMyServer.Pages
         // 卸载页面
         private void Page_Unloaded(object sender, RoutedEventArgs e)
         {
-            var window = Window.Current;
+            var window = App.MainWindow;
             if (window != null)
             {
                 window.Activated -= Window_Activated;  // 取消事件监听
@@ -281,7 +281,11 @@ namespace SeeMyServer.Pages
         // 窗口是否活动
         private void Window_Activated(object sender, Microsoft.UI.Xaml.WindowActivatedEventArgs e)
         {
-            int losesFocusStopSSHSelectedIndex = (int)localSettings.Values["LosesFocusStopSSHSelectedIndex"];
+            int losesFocusStopSSHSelectedIndex = 0;
+            if (localSettings.Values["LosesFocusStopSSHSelectedIndex"] != null)
+            {
+                losesFocusStopSSHSelectedIndex = (int)localSettings.Values["LosesFocusStopSSHSelectedIndex"];
+            }
 
             if (losesFocusStopSSHSelectedIndex == 0)
             {
