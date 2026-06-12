@@ -279,6 +279,9 @@
   <data name="OpenSSHTerminal.Label" xml:space="preserve">
     <value>打开终端</value>
   </data>
+  <data name="OpenTopPage.Label" xml:space="preserve">
+    <value>进程监控</value>
+  </data>
   <data name="OSType.Header" xml:space="preserve">
     <value>操作系统类型</value>
   </data>
@@ -326,6 +329,9 @@
   </data>
   <data name="terminalMenuItemText" xml:space="preserve">
     <value>打开终端</value>
+  </data>
+  <data name="topPageMenuItemText" xml:space="preserve">
+    <value>进程监控</value>
   </data>
   <data name="ThemeSetting.Text" xml:space="preserve">
     <value>应用主题</value>

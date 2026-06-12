@@ -321,6 +321,10 @@ namespace SeeMyServer.Pages
                 cmsModel.NumberOfFailures = 0;
                 Method.UpdateCMSModelFromUsageResult(cmsModel, Usages.Result, logger);
             }
+            else
+            {
+                cmsModel.NumberOfFailuresSec = 60;
+            }
         }
         private async void Timer_Tick(object sender, object e)
         {
@@ -521,6 +525,16 @@ namespace SeeMyServer.Pages
                     App.m_window.NavigateToPage(typeof(TerminalPage), selectedItem);
                 };
                 menuFlyout.Items.Add(terminalMenuItem);
+
+                MenuFlyoutItem topMenuItem = new MenuFlyoutItem
+                {
+                    Text = resourceLoader.GetString("topPageMenuItemText")
+                };
+                topMenuItem.Click += (sender, e) =>
+                {
+                    App.m_window.NavigateToPage(typeof(TopPage), selectedItem);
+                };
+                menuFlyout.Items.Add(topMenuItem);
 
                 // 添加分割线
                 MenuFlyoutSeparator separator = new MenuFlyoutSeparator();

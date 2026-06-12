@@ -294,6 +294,9 @@
   <data name="OpenSSHTerminal.Label" xml:space="preserve">
     <value>Open Terminal</value>
   </data>
+  <data name="OpenTopPage.Label" xml:space="preserve">
+    <value>Process Monitor</value>
+  </data>
   <data name="OSType.Header" xml:space="preserve">
     <value>OS Type</value>
   </data>
@@ -344,6 +347,9 @@
   </data>
   <data name="terminalMenuItemText" xml:space="preserve">
     <value>Open Terminal</value>
+  </data>
+  <data name="topPageMenuItemText" xml:space="preserve">
+    <value>Process Monitor</value>
   </data>
   <data name="ThemeSetting.Text" xml:space="preserve">
     <value>App theme</value>

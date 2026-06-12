@@ -521,6 +521,97 @@ namespace SeeMyServer.Methods
         }
 
         // 负载结果解析
+        // 解析 top -bn1 输出中的进程列表（自动适配不同列排序）
+        public static List<TopProcessInfo> ParseTopProcesses(string topOutput)
+        {
+            var processes = new List<TopProcessInfo>();
+            if (string.IsNullOrEmpty(topOutput)) return processes;
+
+            string[] lines = topOutput.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+
+            // 列名 → 索引映射
+            int pidIdx = -1, userIdx = -1, cpuIdx = -1, memIdx = -1;
+            int timeIdx = -1, commandIdx = -1, statusIdx = -1;
+            int virtIdx = -1, resIdx = -1, shrIdx = -1;
+            bool headerFound = false;
+
+            foreach (string line in lines)
+            {
+                string trimmed = line.Trim();
+                if (string.IsNullOrEmpty(trimmed)) continue;
+
+                // 找到表头行
+                if (!headerFound)
+                {
+                    if (!trimmed.Contains("PID") || !trimmed.Contains("COMMAND"))
+                        continue;
+                    headerFound = true;
+                    string[] cols = trimmed.Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
+                    for (int i = 0; i < cols.Length; i++)
+                    {
+                        string name = cols[i].Trim().ToUpperInvariant();
+                        switch (name)
+                        {
+                            case "PID": pidIdx = i; break;
+                            case "USER": userIdx = i; break;
+                            case "%CPU": cpuIdx = i; break;
+                            case "TIME+": timeIdx = i; break;
+                            case "TIME": timeIdx = i; break;
+                            case "COMMAND": commandIdx = i; break;
+                            case "S": statusIdx = i; break;
+                            case "STAT": statusIdx = i; break;
+                            case "VIRT": virtIdx = i; break;
+                            case "VSZ": virtIdx = i; break;
+                            case "RES": resIdx = i; break;
+                            case "RSS": resIdx = i; break;
+                            case "SHR": shrIdx = i; break;
+                            case "%VSZ": if (memIdx < 0) memIdx = i; break;
+                            case "%MEM": memIdx = i; break;
+                        }
+                    }
+                    continue;
+                }
+
+                // 解析数据行
+                string[] parts = trimmed.Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
+                if (pidIdx < 0 || parts.Length <= pidIdx || !int.TryParse(parts[pidIdx], out _))
+                    continue;
+
+                string time = timeIdx >= 0 && timeIdx < parts.Length ? parts[timeIdx] : "-";
+
+                string status = statusIdx >= 0 && statusIdx < parts.Length ? parts[statusIdx] : "-";
+                string statusText = status switch
+                {
+                    "R" => "运行",
+                    "S" => "睡眠",
+                    "D" => "不可中断",
+                    "Z" => "僵尸",
+                    "T" => "停止",
+                    "I" => "空闲",
+                    _ => status
+                };
+
+                string command = commandIdx >= 0 && commandIdx < parts.Length
+                    ? string.Join(" ", parts, commandIdx, parts.Length - commandIdx).TrimEnd('+')
+                    : "";
+
+                processes.Add(new TopProcessInfo
+                {
+                    PID = parts[pidIdx],
+                    User = userIdx >= 0 && userIdx < parts.Length ? parts[userIdx] : "",
+                    CPUPercent = cpuIdx >= 0 && cpuIdx < parts.Length ? parts[cpuIdx] : "0",
+                    MEMPercent = memIdx >= 0 && memIdx < parts.Length ? parts[memIdx] : "0",
+                    Time = time,
+                    Command = command,
+                    Status = statusText,
+                    VirtMem = virtIdx >= 0 && virtIdx < parts.Length ? parts[virtIdx] : "",
+                    ResMem = resIdx >= 0 && resIdx < parts.Length ? parts[resIdx] : "",
+                    SharedMem = shrIdx >= 0 && shrIdx < parts.Length ? parts[shrIdx] : ""
+                });
+            }
+            return processes;
+        }
+
         // 不同主机的top格式可能不同，大多数Linux发行版可能相同，OpenWRT一般不同，这里注意特殊处理。
         public static List<string> LoadAverageResult(string CoreNumRev, string TopRev)
         {
@@ -627,7 +718,7 @@ namespace SeeMyServer.Methods
                 {
                 "uci get system.@system[0].hostname"
                 };
-                HostnameRev = (await SendSSHCommandAsync(CMD, cmsModel)).FirstOrDefault();
+                HostnameRev = (await SendSSHCommandAsync(CMD, cmsModel).ConfigureAwait(false)).FirstOrDefault();
 
                 // 如果结果仍然错误
                 if (HostnameRev != "" && HostnameRev != null && !HostnameRev.StartsWith("[CMSError]:"))
@@ -697,13 +788,13 @@ namespace SeeMyServer.Methods
             "df -hP",
             "uptime | awk '{print $3 \" \" $4}'",
             "hostname",
-            "top -bn1",
+            "top -bn1 -w 512",
             "cat /proc/cpuinfo | grep processor | wc -l",
             "cat /etc/*-release | grep PRETTY_NAME",
             "cat /proc/diskstats",
             "uname -r"
             };
-            string[] result = await SendSSHCommandAsync(CPUUsageCMD, cmsModel);
+            string[] result = await SendSSHCommandAsync(CPUUsageCMD, cmsModel).ConfigureAwait(false);
             // 开始计时
             stopwatch.Start();
             try
@@ -722,9 +813,9 @@ namespace SeeMyServer.Methods
                     string DiskStatsRev = result[9];
                     string LinuxKernelVersion = result[10];
 
-                    await Task.Delay(1000);
+                    await Task.Delay(1000).ConfigureAwait(false);
 
-                    string[] result2 = await SendSSHCommandAsync(CPUUsageCMD, cmsModel);
+                    string[] result2 = await SendSSHCommandAsync(CPUUsageCMD, cmsModel).ConfigureAwait(false);
                     // 停止计时
                     stopwatch.Stop();
 
@@ -769,8 +860,6 @@ namespace SeeMyServer.Methods
                     // 停止计时
                     stopwatch.Stop();
 
-                    // 失败倒计时，设置为60
-                    cmsModel.NumberOfFailuresSec = 60;
                     logger.LogError("SSH results array is null.");
                     return null;
                 }
@@ -816,6 +905,41 @@ namespace SeeMyServer.Methods
                 cmsModel.CPUCoreNum = CPUCoreNum;
             cmsModel.TopRes = TOPRec;
             cmsModel.LinuxKernelVersionRes = LinuxKernelVersion;
+
+            // 解析 TOP 进程列表（增量更新，按序复用避免 Clear+Add 重建视觉树）
+            try
+            {
+                var parsed = ParseTopProcesses(TOPRec);
+                var existing = cmsModel.TopProcesses;
+                int parsedCount = parsed.Count;
+
+                for (int i = 0; i < parsedCount; i++)
+                {
+                    if (i < existing.Count)
+                    {
+                        var e = existing[i];
+                        e.CPUPercent = parsed[i].CPUPercent;
+                        e.MEMPercent = parsed[i].MEMPercent;
+                        e.Time = parsed[i].Time;
+                        e.Status = parsed[i].Status;
+                        e.Command = parsed[i].Command;
+                        e.User = parsed[i].User;
+                        e.VirtMem = parsed[i].VirtMem;
+                        e.ResMem = parsed[i].ResMem;
+                        e.SharedMem = parsed[i].SharedMem;
+                    }
+                    else
+                    {
+                        existing.Add(parsed[i]);
+                    }
+                }
+                while (existing.Count > parsedCount)
+                    existing.RemoveAt(existing.Count - 1);
+            }
+            catch (Exception ex)
+            {
+                logger?.LogError($"TOP parse failed: {ex.Message}");
+            }
 
             // 处理CPU数据
             try

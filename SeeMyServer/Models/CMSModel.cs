@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Threading;
 
 namespace SeeMyServer.Models
@@ -464,6 +465,8 @@ namespace SeeMyServer.Models
                 }
             }
         }
+
+        public ObservableCollection<TopProcessInfo> TopProcesses { get; set; } = new ObservableCollection<TopProcessInfo>();
 
         private string _linuxKernelVersionRes;
         public string LinuxKernelVersionRes

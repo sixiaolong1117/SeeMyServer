@@ -278,55 +278,60 @@ namespace SeeMyServer.Pages
             if (Usages.Result != null)
             {
                 Method.UpdateCMSModelFromUsageResult(cmsModel, Usages.Result, logger);
+            }
+            else
+            {
+                cmsModel.NumberOfFailuresSec = 60;
+                return;
+            }
 
-                // DetailPage 特有的 UI 更新（ProgressBars、Swap可见性、ListView绑定）
-                if (cmsModel.CPUCoreTokens != null && cmsModel.CPUCoreTokens.Length > 0 && !(cmsModel.CPUCoreTokens.Length == 1 && cmsModel.CPUCoreTokens[0] == "0"))
+            // DetailPage 特有的 UI 更新（ProgressBars、Swap可见性、ListView绑定）
+            if (cmsModel.CPUCoreTokens != null && cmsModel.CPUCoreTokens.Length > 0 && !(cmsModel.CPUCoreTokens.Length == 1 && cmsModel.CPUCoreTokens[0] == "0"))
+            {
+                if (progressBarsGrid.ColumnDefinitions.Count == 0)
                 {
-                    if (progressBarsGrid.ColumnDefinitions.Count == 0)
-                    {
-                        progressBars = CreateProgressBars(progressBarsGrid, cmsModel.CPUCoreTokens, cmsModel.CPUCoreNum);
-                    }
-                    else if (progressBars != null)
-                    {
-                        UpdateProgressBars(progressBars, cmsModel.CPUCoreTokens, cmsModel.CPUCoreNum);
-                    }
+                    progressBars = CreateProgressBars(progressBarsGrid, cmsModel.CPUCoreTokens, cmsModel.CPUCoreNum);
                 }
+                else if (progressBars != null)
+                {
+                    UpdateProgressBars(progressBars, cmsModel.CPUCoreTokens, cmsModel.CPUCoreNum);
+                }
+            }
 
-                // 挂载和网络信息
-                if (cmsModel.MountInfos != null)
-                {
-                    MountInfosListView.ItemContainerTransitions = null;
-                }
-                if (cmsModel.NetworkInterfaceInfos != null)
-                {
-                    NetworkInfosListView.ItemContainerTransitions = null;
-                }
-                MountInfosListView.ItemsSource = cmsModel.MountInfos;
-                NetworkInfosListView.ItemsSource = cmsModel.NetworkInterfaceInfos;
+            // 挂载和网络信息
+            if (cmsModel.MountInfos != null)
+            {
+                MountInfosListView.ItemContainerTransitions = null;
+            }
+            if (cmsModel.NetworkInterfaceInfos != null)
+            {
+                NetworkInfosListView.ItemContainerTransitions = null;
+            }
+            MountInfosListView.ItemsSource = cmsModel.MountInfos;
+            NetworkInfosListView.ItemsSource = cmsModel.NetworkInterfaceInfos;
 
-                foreach (MountInfo mountInfo in cmsModel.MountInfos ?? Enumerable.Empty<MountInfo>())
-                {
-                    mountInfo.SectorsReadPerSecond ??= "N/A";
-                    mountInfo.SectorsWrittenPerSecond ??= "N/A";
-                    mountInfo.SectorsReadBytes ??= "N/A";
-                    mountInfo.SectorsWrittenBytes ??= "N/A";
-                }
+            foreach (MountInfo mountInfo in cmsModel.MountInfos ?? Enumerable.Empty<MountInfo>())
+            {
+                mountInfo.SectorsReadPerSecond ??= "N/A";
+                mountInfo.SectorsWrittenPerSecond ??= "N/A";
+                mountInfo.SectorsReadBytes ??= "N/A";
+                mountInfo.SectorsWrittenBytes ??= "N/A";
+            }
 
-                // Swap 可见性
-                if (cmsModel.SwapUsage != "0%" && cmsModel.SwapUsage != null)
-                {
-                    SwapCase1.Visibility = Visibility.Visible;
-                    SwapCase2.Visibility = Visibility.Visible;
-                    SwapTips1.Visibility = Visibility.Visible;
-                    SwapTips2.Visibility = Visibility.Visible;
-                }
-                else
-                {
-                    SwapCase1.Visibility = Visibility.Collapsed;
-                    SwapCase2.Visibility = Visibility.Collapsed;
-                    SwapTips1.Visibility = Visibility.Collapsed;
-                    SwapTips2.Visibility = Visibility.Collapsed;
-                }
+            // Swap 可见性
+            if (cmsModel.SwapUsage != "0%" && cmsModel.SwapUsage != null)
+            {
+                SwapCase1.Visibility = Visibility.Visible;
+                SwapCase2.Visibility = Visibility.Visible;
+                SwapTips1.Visibility = Visibility.Visible;
+                SwapTips2.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                SwapCase1.Visibility = Visibility.Collapsed;
+                SwapCase2.Visibility = Visibility.Collapsed;
+                SwapTips1.Visibility = Visibility.Collapsed;
+                SwapTips2.Visibility = Visibility.Collapsed;
             }
         }
 
@@ -377,6 +382,10 @@ namespace SeeMyServer.Pages
         private void OpenSSHTerminal_Click(object sender, RoutedEventArgs e)
         {
             App.m_window.NavigateToPage(typeof(TerminalPage), dataList);
+        }
+        private void OpenTopPage_Click(object sender, RoutedEventArgs e)
+        {
+            App.m_window.NavigateToPage(typeof(TopPage), dataList);
         }
         private void EditConfig_Click(object sender, RoutedEventArgs e)
         {

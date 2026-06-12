@@ -6,6 +6,7 @@
     xmlns:controls="using:CommunityToolkit.WinUI.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="using:SeeMyServer.Pages"
+    xmlns:models="using:SeeMyServer.Models"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
     mc:Ignorable="d">
@@ -1095,33 +1096,7 @@
                         </ListView.ItemTemplate>
                     </ListView>
                 </Grid>
-                <Grid Grid.Row="11" Margin="0,18,0,0">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                    </Grid.RowDefinitions>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <TextBlock
-                        x:Uid="AboutServerTopRec"
-                        Grid.Row="0"
-                        Margin="0,0,0,8" />
-                    <Grid
-                        Grid.Row="1"
-                        MinHeight="50"
-                        Padding="24"
-                        Background="{ThemeResource SystemControlBackgroundAltMediumLowBrush}"
-                        BorderThickness="0"
-                        CornerRadius="4,4,4,4">
-                        <ScrollViewer MaxHeight="400">
-                            <TextBlock
-                                FontFamily="Consolas"
-                                IsTabStop="True"
-                                Text="{Binding TopRes}" />
-                        </ScrollViewer>
-                    </Grid>
-                </Grid>
+
             </Grid>
         </ScrollViewer>
         <CommandBar
@@ -1139,6 +1114,14 @@
                 Click="OpenSSHTerminal_Click">
                 <AppBarButton.Icon>
                     <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE756;" />
+                </AppBarButton.Icon>
+            </AppBarButton>
+            <AppBarButton
+                x:Name="OpenTopPage"
+                x:Uid="OpenTopPage"
+                Click="OpenTopPage_Click">
+                <AppBarButton.Icon>
+                    <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE737;" />
                 </AppBarButton.Icon>
             </AppBarButton>
             <AppBarButton
