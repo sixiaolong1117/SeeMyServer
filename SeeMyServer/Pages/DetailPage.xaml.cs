@@ -374,12 +374,9 @@ namespace SeeMyServer.Pages
 
             await Task.WhenAll(tasks);
         }
-        private async void OpenSSHTerminal_Click(object sender, RoutedEventArgs e)
+        private void OpenSSHTerminal_Click(object sender, RoutedEventArgs e)
         {
-            var dialog = new TerminalDialog(dataList);
-            dialog.XamlRoot = this.XamlRoot;
-            await dialog.ShowAsync();
-            logger.LogInfo("OpenSSHTerminal() completed.");
+            App.m_window.NavigateToPage(typeof(TerminalPage), dataList);
         }
         private void EditConfig_Click(object sender, RoutedEventArgs e)
         {

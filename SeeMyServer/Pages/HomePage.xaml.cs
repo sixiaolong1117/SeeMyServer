@@ -514,11 +514,9 @@ namespace SeeMyServer.Pages
                 {
                     Text = resourceLoader.GetString("terminalMenuItemText")
                 };
-                terminalMenuItem.Click += async (sender, e) =>
+                terminalMenuItem.Click += (sender, e) =>
                 {
-                    var dialog = new TerminalDialog(selectedItem);
-                    dialog.XamlRoot = this.XamlRoot;
-                    await dialog.ShowAsync();
+                    App.m_window.NavigateToPage(typeof(TerminalPage), selectedItem);
                 };
                 menuFlyout.Items.Add(terminalMenuItem);
 
