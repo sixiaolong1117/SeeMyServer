@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -443,5 +443,95 @@
   </data>
   <data name="ClearLogButton.Content" xml:space="preserve">
     <value>Clear</value>
+  </data>
+  <data name="TerminalBackButton.Content" xml:space="preserve">
+    <value>← Back</value>
+  </data>
+  <data name="TerminalReconnectButton.Content" xml:space="preserve">
+    <value>Reconnect</value>
+  </data>
+  <data name="TerminalGoUpButton.Content" xml:space="preserve">
+    <value>⬆</value>
+  </data>
+  <data name="TerminalUploadButton.Content" xml:space="preserve">
+    <value>Upload</value>
+  </data>
+  <data name="TerminalNewFolderButton.Content" xml:space="preserve">
+    <value>New Folder</value>
+  </data>
+  <data name="TerminalDeleteButton.Content" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="SftpConnecting" xml:space="preserve">
+    <value>Connecting...</value>
+  </data>
+  <data name="SftpConnected" xml:space="preserve">
+    <value>SFTP connected</value>
+  </data>
+  <data name="SftpError" xml:space="preserve">
+    <value>SFTP error: {0}</value>
+  </data>
+  <data name="SftpDownloadingProgress" xml:space="preserve">
+    <value>Downloading {0} ({1}%)</value>
+  </data>
+  <data name="SftpDownloadingStart" xml:space="preserve">
+    <value>Downloading {0}...</value>
+  </data>
+  <data name="SftpDownloaded" xml:space="preserve">
+    <value>Downloaded to {0}</value>
+  </data>
+  <data name="SftpDownloadFailed" xml:space="preserve">
+    <value>Download failed: {0}</value>
+  </data>
+  <data name="SftpUploadingProgress" xml:space="preserve">
+    <value>Uploading ({0}/{1}) {2} ({3}%)</value>
+  </data>
+  <data name="SftpUploaded" xml:space="preserve">
+    <value>Uploaded: {0} OK, {1} failed</value>
+  </data>
+  <data name="SftpItemsCount" xml:space="preserve">
+    <value>{0} items</value>
+  </data>
+  <data name="SftpOpen" xml:space="preserve">
+    <value>Open</value>
+  </data>
+  <data name="SftpDownload" xml:space="preserve">
+    <value>Download</value>
+  </data>
+  <data name="SftpRename" xml:space="preserve">
+    <value>Rename</value>
+  </data>
+  <data name="SftpDelete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="SftpCreate" xml:space="preserve">
+    <value>Create</value>
+  </data>
+  <data name="SftpRenameTitle" xml:space="preserve">
+    <value>Rename</value>
+  </data>
+  <data name="SftpNewFolderTitle" xml:space="preserve">
+    <value>New Folder</value>
+  </data>
+  <data name="SftpDeleteConfirmTitle" xml:space="preserve">
+    <value>Confirm Delete</value>
+  </data>
+  <data name="SftpDeleteConfirmContent" xml:space="preserve">
+    <value>Delete "{0}"?</value>
+  </data>
+  <data name="TerminalConnecting" xml:space="preserve">
+    <value>Connecting...</value>
+  </data>
+  <data name="TerminalReconnecting" xml:space="preserve">
+    <value>Reconnecting...</value>
+  </data>
+  <data name="TerminalConnectionFailed" xml:space="preserve">
+    <value>Connection failed: {0}</value>
+  </data>
+  <data name="TerminalDisconnected" xml:space="preserve">
+    <value>[Disconnected: {0}]</value>
+  </data>
+  <data name="TerminalConnectionClosed" xml:space="preserve">
+    <value>[Connection closed]</value>
   </data>
 </root>

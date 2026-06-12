@@ -4,7 +4,10 @@ using SeeMyServer.Methods;
 using System;
 using Microsoft.Windows.AppLifecycle;
 using Microsoft.Windows.ApplicationModel.Resources;
-using PInvoke;
+using Windows.Win32;
+using Windows.Win32.Foundation;
+using Windows.Win32.UI.WindowsAndMessaging;
+using static Windows.Win32.PInvoke;
 
 namespace SeeMyServer
 {
@@ -46,12 +49,12 @@ namespace SeeMyServer
                 string appTitle = resourceLoader.GetString("AppTitle"); // 动态加载 AppTitle 资源
 
                 // 确保已激活的实例获得焦点并显示在前台
-                IntPtr existingHwnd = User32.FindWindow(null, appTitle);  // 使用从资源文件加载的窗口标题查找窗口句柄
-                if (existingHwnd != IntPtr.Zero)
+                HWND existingHwnd = FindWindow(null, appTitle);
+                if (!existingHwnd.IsNull)
                 {
                     // 显示窗口并设置为前台
-                    User32.ShowWindow(existingHwnd, User32.WindowShowStyle.SW_RESTORE); // 如果窗口最小化，则恢复
-                    User32.SetForegroundWindow(existingHwnd); // 将窗口设为前台
+                    ShowWindow(existingHwnd, SHOW_WINDOW_CMD.SW_RESTORE); // 如果窗口最小化，则恢复
+                    SetForegroundWindow(existingHwnd); // 将窗口设为前台
                 }
 
                 // 退出当前实例
@@ -81,7 +84,7 @@ namespace SeeMyServer
         private void SetWindowSize(IntPtr hwnd, int width, int height)
         {
             // 获取 DPI 缩放比例
-            var dpi = User32.GetDpiForWindow(hwnd);
+            var dpi = GetDpiForWindow((HWND)hwnd);
             float scalingFactor = (float)dpi / 96;
 
             // 根据缩放比例调整窗口尺寸
@@ -89,11 +92,11 @@ namespace SeeMyServer
             height = (int)(height * scalingFactor);
 
             // 设置窗口大小，不移动窗口位置
-            User32.SetWindowPos(
-                hwnd,
-                User32.SpecialWindowHandles.HWND_TOP,
+            SetWindowPos(
+                (HWND)hwnd,
+                (HWND)IntPtr.Zero,
                 0, 0, width, height,
-                User32.SetWindowPosFlags.SWP_NOMOVE
+                SET_WINDOW_POS_FLAGS.SWP_NOMOVE
             );
         }
     }

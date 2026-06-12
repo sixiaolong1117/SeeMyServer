@@ -39,6 +39,8 @@ namespace SeeMyServer
             NavView.SelectedItem = NavView.MenuItems[0];
 
             AppTitleTextBlock.Text = resourceLoader.GetString("AppTitle");
+
+            contentFrame.Navigated += ContentFrame_Navigated;
         }
         bool TrySetSystemBackdrop()
         {
@@ -200,8 +202,17 @@ namespace SeeMyServer
         }
         private void BackButton_Click(NavigationView sender, NavigationViewBackRequestedEventArgs args)
         {
-            contentFrame.Navigate(typeof(HomePage));
-            // 更新选中的导航项
+            if (contentFrame.CanGoBack)
+            {
+                contentFrame.GoBack();
+            }
+            else
+            {
+                contentFrame.Navigate(typeof(HomePage));
+            }
+        }
+        private void ContentFrame_Navigated(object sender, NavigationEventArgs e)
+        {
             var selectedItem = FindSelectedItemByTag(contentFrame.CurrentSourcePageType.Name);
             if (selectedItem != null)
             {

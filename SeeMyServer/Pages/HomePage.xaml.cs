@@ -1,30 +1,32 @@
-using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Imaging;
+using Microsoft.UI.Xaml.Navigation;
 using SeeMyServer.Datas;
 using SeeMyServer.Helper;
 using SeeMyServer.Methods;
 using SeeMyServer.Models;
 using SeeMyServer.Pages.Dialogs;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.Diagnostics;
-using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Windows.ApplicationModel.Core;
+using Windows.ApplicationModel.DataTransfer;
 using Windows.ApplicationModel.Resources;
 using Windows.Storage;
-using CommunityToolkit.WinUI.Controls;
-using static PInvoke.User32;
-using PInvoke;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Collections.Specialized;
-using Microsoft.UI.Xaml.Navigation;
+using Windows.System;
 using Windows.UI.Core;
 using Windows.UI.ViewManagement;
-using Windows.ApplicationModel.Core;
 
 namespace SeeMyServer.Pages
 {
@@ -33,7 +35,7 @@ namespace SeeMyServer.Pages
         // 启用本地设置数据
         ApplicationDataContainer localSettings = ApplicationData.Current.LocalSettings;
         ResourceLoader resourceLoader = new ResourceLoader();
-        private DispatcherQueue _dispatcherQueue;
+        private Microsoft.UI.Dispatching.DispatcherQueue _dispatcherQueue;
         private DispatcherTimer timer;
         private Logger logger;
 
@@ -48,7 +50,7 @@ namespace SeeMyServer.Pages
             logger = new Logger(1);
 
             // 获取UI线程的DispatcherQueue
-            _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
+            _dispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();
 
             // 页面初始化后，加载数据
             LoadString();

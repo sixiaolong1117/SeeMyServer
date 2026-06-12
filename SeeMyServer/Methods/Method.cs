@@ -1,7 +1,6 @@
 using Microsoft.UI.Xaml.Shapes;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using PInvoke;
 using Renci.SshNet;
 using Renci.SshNet.Security;
 using SeeMyServer.Datas;
@@ -26,7 +25,6 @@ using Windows.Networking;
 using Windows.Storage;
 using Windows.Storage.Pickers;
 using Windows.Storage.Provider;
-using static PInvoke.User32;
 
 namespace SeeMyServer.Methods
 {

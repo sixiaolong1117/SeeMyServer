@@ -7,24 +7,27 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <Grid x:Name="RootGrid" RowSpacing="6">
+    <Grid x:Name="RootGrid">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
+            <RowDefinition Height="2*" MinHeight="120" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" MinHeight="160" />
         </Grid.RowDefinitions>
 
-        <Grid Grid.Row="0" Margin="12,8,12,0">
+        <Grid Grid.Row="0" Margin="12,8,12,6">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
             <Button
                 x:Name="BackButton"
+                x:Uid="TerminalBackButton"
                 Grid.Column="0"
-                Content="← Back"
                 Click="BackButton_Click"
                 Margin="0,0,16,0" />
 
@@ -36,23 +39,159 @@
                 FontWeight="SemiBold"
                 Opacity="0.9" />
 
+            <TextBlock
+                x:Name="SftpStatusText"
+                Grid.Column="3"
+                VerticalAlignment="Center"
+                FontSize="12"
+                Opacity="0.6"
+                Margin="0,0,8,0"
+                Visibility="Collapsed" />
+
             <Button
                 x:Name="ReconnectButton"
-                Grid.Column="3"
-                Content="Reconnect"
+                x:Uid="TerminalReconnectButton"
+                Grid.Column="4"
                 Click="ReconnectButton_Click"
                 Visibility="Collapsed" />
         </Grid>
 
         <Border
             Grid.Row="1"
-            Margin="12,0,12,12"
+            Margin="12,0,12,0"
             Background="#1E1E1E"
-            CornerRadius="6">
+            CornerRadius="6,6,0,0">
             <WebView2
                 x:Name="TerminalView"
                 VerticalAlignment="Stretch"
                 HorizontalAlignment="Stretch" />
         </Border>
+
+        <Rectangle
+            Grid.Row="2"
+            Height="1"
+            Margin="12,2,12,2"
+            HorizontalAlignment="Stretch"
+            Fill="{ThemeResource SystemAccentColor}"
+            Opacity="0.15" />
+
+        <Grid
+            x:Name="SftpPanel"
+            Grid.Row="3"
+            Margin="12,0,12,12"
+            Visibility="Collapsed">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <Grid Grid.Row="0" Margin="0,6,0,6" ColumnSpacing="6">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Button
+                    x:Name="GoUpButton"
+                    x:Uid="TerminalGoUpButton"
+                    Grid.Column="0"
+                    ToolTipService.ToolTip="Go up"
+                    Click="GoUpButton_Click"
+                    Width="36" />
+                <TextBox
+                    x:Name="PathBox"
+                    Grid.Column="1"
+                    Text="/"
+                    FontFamily="Consolas"
+                    FontSize="13"
+                    KeyDown="PathBox_KeyDown" />
+            </Grid>
+
+            <ListView
+                x:Name="FileList"
+                Grid.Row="1"
+                SelectionMode="Single"
+                DoubleTapped="FileList_DoubleTapped"
+                RightTapped="FileList_RightTapped"
+                FontSize="13">
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <Grid ColumnSpacing="8" Height="28">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="24" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="100" />
+                                <ColumnDefinition Width="150" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock
+                                Grid.Column="0"
+                                Text="{Binding Icon}"
+                                VerticalAlignment="Center" />
+                            <TextBlock
+                                Grid.Column="1"
+                                Text="{Binding Name}"
+                                VerticalAlignment="Center"
+                                FontFamily="Consolas" />
+                            <TextBlock
+                                Grid.Column="2"
+                                Text="{Binding SizeDisplay}"
+                                VerticalAlignment="Center"
+                                HorizontalAlignment="Right"
+                                Opacity="0.7"
+                                FontFamily="Consolas" />
+                            <TextBlock
+                                Grid.Column="3"
+                                Text="{Binding ModifiedDisplay}"
+                                VerticalAlignment="Center"
+                                HorizontalAlignment="Right"
+                                Opacity="0.6"
+                                FontFamily="Consolas" />
+                        </Grid>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+
+            <Grid Grid.Row="2" Margin="0,6,0,0" ColumnSpacing="6">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Grid Grid.Row="0" ColumnSpacing="6">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Button
+                        x:Name="UploadButton"
+                        x:Uid="TerminalUploadButton"
+                        Grid.Column="0"
+                        Click="UploadButton_Click" />
+                    <Button
+                        x:Name="NewFolderButton"
+                        x:Uid="TerminalNewFolderButton"
+                        Grid.Column="1"
+                        Click="NewFolderButton_Click" />
+                    <Button
+                        x:Name="DeleteButton"
+                        x:Uid="TerminalDeleteButton"
+                        Grid.Column="2"
+                        Click="DeleteButton_Click" />
+                    <TextBlock
+                        x:Name="FileCountText"
+                        Grid.Column="4"
+                        VerticalAlignment="Center"
+                        FontSize="12"
+                        Opacity="0.5" />
+                </Grid>
+                <ProgressBar
+                    x:Name="TransferProgress"
+                    Grid.Row="1"
+                    Margin="0,6,0,0"
+                    Visibility="Collapsed" />
+            </Grid>
+        </Grid>
     </Grid>
 </Page>
