@@ -2,6 +2,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Windows.ApplicationModel.Resources;
 using SeeMyServer.Datas;
 using SeeMyServer.Helper;
@@ -53,6 +54,49 @@ namespace SeeMyServer.Pages.Dialogs
             }
         }
 
+        private void ConfirmGenerateSSHKey_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                int sshKeyId = SSHKeyMethod.GenerateAndSaveKey(GenerateSSHKeyNameTextBox.Text);
+                GenerateSSHKeyNameTextBox.Text = "";
+                GenerateSSHKeyError.Visibility = Visibility.Collapsed;
+                GenerateSSHKeyFlyout.Hide();
+                LoadSSHKeys(sshKeyId.ToString());
+            }
+            catch (Exception ex)
+            {
+                GenerateSSHKeyError.Text = string.Format(resourceLoader.GetString("GenerateSSHKeyError"), ex.Message);
+                GenerateSSHKeyError.Visibility = Visibility.Visible;
+            }
+        }
+
+        private void CancelGenerateSSHKey_Click(object sender, RoutedEventArgs e)
+        {
+            GenerateSSHKeyNameTextBox.Text = "";
+            GenerateSSHKeyError.Visibility = Visibility.Collapsed;
+            GenerateSSHKeyFlyout.Hide();
+        }
+
+        private async void ExportSSHKey_Click(object sender, RoutedEventArgs e)
+        {
+            if (!(SSHKeyListView.SelectedItem is SSHKeyModel selectedKey))
+                return;
+
+            ExportSSHKeyButton.IsEnabled = false;
+            try
+            {
+                if (!await WindowsHelloHelper.VerifyAsync(resourceLoader.GetString("WindowsHelloVerifyMessage")))
+                    return;
+
+                await SSHKeyMethod.ExportKey(selectedKey.Id.ToString());
+            }
+            finally
+            {
+                ExportSSHKeyButton.IsEnabled = true;
+            }
+        }
+
         private async void ConfirmDeleteSSHKey_Click(object sender, RoutedEventArgs e)
         {
             if (!await WindowsHelloHelper.VerifyAsync(resourceLoader.GetString("WindowsHelloVerifyMessage")))
@@ -74,6 +118,7 @@ namespace SeeMyServer.Pages.Dialogs
 
         private void SSHKeyListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            ExportSSHKeyButton.IsEnabled = SSHKeyListView.SelectedItem != null;
             DeleteSSHKeyButton.IsEnabled = SSHKeyListView.SelectedItem != null;
         }
 

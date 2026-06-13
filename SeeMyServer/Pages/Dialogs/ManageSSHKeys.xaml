@@ -8,7 +8,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <Grid Width="360">
+    <Grid Width="520">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -37,7 +37,7 @@
                 <ListView.ItemTemplate>
                     <DataTemplate>
                         <Grid
-                            Width="320"
+                            Width="480"
                             Padding="8">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
@@ -77,7 +77,7 @@
 
         <StackPanel
             Grid.Row="2"
-            Margin="0,12,0,0"
+            Margin="0,12,24,0"
             HorizontalAlignment="Right"
             Orientation="Horizontal">
             <Button
@@ -85,6 +85,37 @@
                 x:Uid="ImportSSHKeyButton"
                 Margin="0,0,8,0"
                 Click="ImportSSHKey_Click" />
+            <Button
+                x:Name="GenerateSSHKeyButton"
+                x:Uid="GenerateSSHKeyButton"
+                Margin="0,0,8,0">
+                <Button.Flyout>
+                    <Flyout x:Name="GenerateSSHKeyFlyout">
+                        <StackPanel Width="320">
+                            <TextBox
+                                x:Name="GenerateSSHKeyNameTextBox"
+                                x:Uid="GenerateSSHKeyNameTextBox"
+                                Margin="0,0,0,8" />
+                            <TextBlock
+                                x:Name="GenerateSSHKeyError"
+                                Margin="0,8,0,0"
+                                Foreground="IndianRed"
+                                TextWrapping="Wrap"
+                                Visibility="Collapsed" />
+                            <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+                                <Button
+                                    x:Uid="GenerateSSHKeyConfirmButton"
+                                    Margin="0,8,8,0"
+                                    Click="ConfirmGenerateSSHKey_Click" />
+                                <Button
+                                    x:Uid="GenerateSSHKeyCancelButton"
+                                    Margin="0,8,0,0"
+                                    Click="CancelGenerateSSHKey_Click" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Flyout>
+                </Button.Flyout>
+            </Button>
             <Button
                 x:Name="PasteSSHKeyButton"
                 x:Uid="PasteSSHKeyButton"
@@ -117,6 +148,12 @@
                     </Flyout>
                 </Button.Flyout>
             </Button>
+            <Button
+                x:Name="ExportSSHKeyButton"
+                x:Uid="ExportSSHKeyButton"
+                Margin="0,0,8,0"
+                IsEnabled="False"
+                Click="ExportSSHKey_Click" />
             <Button
                 x:Name="DeleteSSHKeyButton"
                 x:Uid="DeleteSSHKeyButton">

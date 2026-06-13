@@ -1,4 +1,4 @@
-﻿using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls;
 using System;
 using System.Threading.Tasks;
 using Windows.ApplicationModel;
@@ -63,7 +63,6 @@ namespace SeeMyServer.Pages
         private async void GetList()
         {
             string nameList = null;
-            string stringList = null;
             try
             {
                 nameList = await HTTPResponse("https://raw.githubusercontent.com/SIXiaolong1117/SIXiaolong1117/main/README/Sponsor/List");
@@ -79,39 +78,7 @@ namespace SeeMyServer.Pages
                     nameList = "无法连接至 Github 或 Gitee。";
                 }
             }
-            try
-            {
-                stringList = await HTTPResponse("https://raw.githubusercontent.com/SIXiaolong1117/SIXiaolong1117/main/README/Text/List");
-            }
-            catch (Exception ex)
-            {
-                try
-                {
-                    stringList = await HTTPResponse("https://gitee.com/XiaolongSI/SIXiaolong1117/raw/main/README/Text/List");
-                }
-                catch (Exception ex2)
-                {
-                    stringList = "";
-                }
-            }
-
-            string randomLine = null;
-            try
-            {
-                // 使用换行符分割字符串成数组
-                string[] lines = stringList.Split(new[] { "\n", "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
-
-                // 使用随机数生成器生成一个随机索引
-                Random rand = new Random();
-                int randomIndex = rand.Next(0, lines.Length);
-
-                // 随机选择一个字符串
-                randomLine = lines[randomIndex];
-            }
-            catch (Exception ex) { }
-
             NameList.Text = nameList;
-            TipsTips.Text = randomLine;
         }
     }
 }

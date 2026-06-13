@@ -396,6 +396,12 @@
   <data name="PasteSSHKeyConfirmButton.Content" xml:space="preserve">
     <value>Confirm</value>
   </data>
+  <data name="ExportSSHKeyButton.Content" xml:space="preserve">
+    <value>Export Key</value>
+  </data>
+  <data name="ExportSSHKeyError" xml:space="preserve">
+    <value>Failed to export SSH key: {0}</value>
+  </data>
   <data name="DeleteSSHKeyButton.Content" xml:space="preserve">
     <value>Delete Key</value>
   </data>
@@ -410,6 +416,24 @@
   </data>
   <data name="ManageSSHKeysNavButton.Content" xml:space="preserve">
     <value>Manage Keys</value>
+  </data>
+  <data name="GenerateSSHKeyButton.Content" xml:space="preserve">
+    <value>Generate Key</value>
+  </data>
+  <data name="GenerateSSHKeyNameTextBox.Header" xml:space="preserve">
+    <value>Key Name</value>
+  </data>
+  <data name="GenerateSSHKeyNameTextBox.PlaceholderText" xml:space="preserve">
+    <value>Leave blank for default name</value>
+  </data>
+  <data name="GenerateSSHKeyConfirmButton.Content" xml:space="preserve">
+    <value>Generate</value>
+  </data>
+  <data name="GenerateSSHKeyCancelButton.Content" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="GenerateSSHKeyError" xml:space="preserve">
+    <value>Failed to generate SSH key: {0}</value>
   </data>
   <data name="SSHKeyNameTextBox.Header" xml:space="preserve">
     <value>Key Name</value>

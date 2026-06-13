@@ -16,7 +16,6 @@
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
@@ -34,12 +33,6 @@
         <ScrollViewer Grid.Row="1" Padding="0,0,0,24">
             <Grid Grid.Row="1">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
@@ -269,89 +262,7 @@
                     </Grid>
                 </Grid>
 
-                <TextBlock
-                    x:Name="AboutReferences"
-                    x:Uid="AboutReference"
-                    Grid.Row="7"
-                    Margin="24,18,0,8" />
 
-                <Grid
-                    Grid.Row="8"
-                    Margin="24,1,24,0"
-                    Padding="16"
-                    Background="{ThemeResource SystemControlBackgroundAltMediumLowBrush}"
-                    BorderThickness="0"
-                    CornerRadius="4,4,4,4">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <HyperlinkButton
-                        Grid.Row="0"
-                        Grid.Column="0"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Center"
-                        Content="WindowsAppSDK"
-                        NavigateUri="https://aka.ms/windowsappsdk" />
-                    <HyperlinkButton
-                        Grid.Row="1"
-                        Grid.Column="0"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Center"
-                        Content="Windows Community Toolkit"
-                        NavigateUri="https://github.com/CommunityToolkit/Windows" />
-                    <HyperlinkButton
-                        Grid.Row="2"
-                        Grid.Column="0"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Center"
-                        Content="Microsoft.Windows.SDK.BuildTools"
-                        NavigateUri="https://www.nuget.org/packages/Microsoft.Windows.SDK.BuildTools/" />
-                    <HyperlinkButton
-                        Grid.Row="3"
-                        Grid.Column="0"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Center"
-                        Content="SSH.NET"
-                        NavigateUri="https://github.com/sshnet/SSH.NET" />
-                    <HyperlinkButton
-                        Grid.Row="4"
-                        Grid.Column="0"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Center"
-                        Content="Microsoft.Data.Sqlite"
-                        NavigateUri="https://www.nuget.org/packages/Microsoft.Data.Sqlite/" />
-                    <HyperlinkButton
-                        Grid.Row="5"
-                        Grid.Column="0"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Center"
-                        Content="Newtonsoft.Json"
-                        NavigateUri="https://www.nuget.org/packages/Newtonsoft.Json/" />
-                    <HyperlinkButton
-                        Grid.Row="6"
-                        Grid.Column="0"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Center"
-                        Content="PInvoke.User32"
-                        NavigateUri="https://www.nuget.org/packages/PInvoke.User32/" />
-                </Grid>
-                <TextBlock
-                    x:Name="TipsTips"
-                    Grid.Row="9"
-                    Grid.Column="0"
-                    Margin="24,8,24,0"
-                    HorizontalAlignment="Center"
-                    Foreground="{ThemeResource SystemControlBackgroundBaseMediumBrush}" />
             </Grid>
         </ScrollViewer>
         <TeachingTip x:Name="AboutAliPayTips">

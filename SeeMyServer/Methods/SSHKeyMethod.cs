@@ -1,6 +1,7 @@
 using Renci.SshNet;
 using Renci.SshNet.Security;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
@@ -119,6 +120,16 @@ namespace SeeMyServer.Methods
             return hostAlgorithm;
         }
 
+        public static int GenerateAndSaveKey(string keyName)
+        {
+            using (RSA rsa = RSA.Create(4096))
+            {
+                string privateKey = rsa.ExportRSAPrivateKeyPem();
+                string name = string.IsNullOrWhiteSpace(keyName) ? $"id_rsa_{DateTime.Now:yyyyMMddHHmmss}" : keyName.Trim();
+                return SavePrivateKey(name, privateKey);
+            }
+        }
+
         private static string NormalizePrivateKey(string privateKey)
         {
             if (string.IsNullOrWhiteSpace(privateKey))
@@ -134,6 +145,50 @@ namespace SeeMyServer.Methods
             public string Name { get; set; }
             public string PublicKey { get; set; }
             public string Fingerprint { get; set; }
+        }
+
+        public static async Task<bool> ExportKey(string sshKeyId)
+        {
+            if (!int.TryParse(sshKeyId, out int keyId))
+            {
+                throw new InvalidOperationException("未选择可用的 SSH 密钥。");
+            }
+
+            SQLiteHelper dbHelper = new SQLiteHelper();
+            SSHKeyModel sshKey = dbHelper.GetSSHKeyById(keyId);
+            if (sshKey == null || string.IsNullOrWhiteSpace(sshKey.PrivateKey))
+            {
+                throw new InvalidOperationException("未找到可用的 SSH 密钥。");
+            }
+
+            var savePicker = new FileSavePicker();
+            var hWnd = WinRT.Interop.WindowNative.GetWindowHandle(App.m_window);
+            WinRT.Interop.InitializeWithWindow.Initialize(savePicker, hWnd);
+
+            savePicker.SuggestedStartLocation = PickerLocationId.Desktop;
+            savePicker.SuggestedFileName = sshKey.Name;
+            savePicker.FileTypeChoices.Add("All Files", new List<string>() { "." });
+
+            StorageFile file = await savePicker.PickSaveFileAsync();
+            if (file == null)
+            {
+                return false;
+            }
+
+            await FileIO.WriteTextAsync(file, sshKey.PrivateKey);
+
+            if (!string.IsNullOrWhiteSpace(sshKey.PublicKey))
+            {
+                StorageFolder parentFolder = await file.GetParentAsync();
+                if (parentFolder != null)
+                {
+                    string pubFileName = file.Name + ".pub";
+                    StorageFile pubFile = await parentFolder.CreateFileAsync(pubFileName, CreationCollisionOption.ReplaceExisting);
+                    await FileIO.WriteTextAsync(pubFile, sshKey.PublicKey);
+                }
+            }
+
+            return true;
         }
 
         /// <summary>

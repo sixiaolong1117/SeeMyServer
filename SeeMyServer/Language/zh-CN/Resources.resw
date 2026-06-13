@@ -378,6 +378,12 @@
   <data name="PasteSSHKeyConfirmButton.Content" xml:space="preserve">
     <value>确认</value>
   </data>
+  <data name="ExportSSHKeyButton.Content" xml:space="preserve">
+    <value>导出密钥</value>
+  </data>
+  <data name="ExportSSHKeyError" xml:space="preserve">
+    <value>导出 SSH 密钥失败：{0}</value>
+  </data>
   <data name="DeleteSSHKeyButton.Content" xml:space="preserve">
     <value>删除密钥</value>
   </data>
@@ -392,6 +398,24 @@
   </data>
   <data name="ManageSSHKeysNavButton.Content" xml:space="preserve">
     <value>管理密钥</value>
+  </data>
+  <data name="GenerateSSHKeyButton.Content" xml:space="preserve">
+    <value>生成密钥</value>
+  </data>
+  <data name="GenerateSSHKeyNameTextBox.Header" xml:space="preserve">
+    <value>密钥名称</value>
+  </data>
+  <data name="GenerateSSHKeyNameTextBox.PlaceholderText" xml:space="preserve">
+    <value>留空时使用默认名称</value>
+  </data>
+  <data name="GenerateSSHKeyConfirmButton.Content" xml:space="preserve">
+    <value>生成</value>
+  </data>
+  <data name="GenerateSSHKeyCancelButton.Content" xml:space="preserve">
+    <value>取消</value>
+  </data>
+  <data name="GenerateSSHKeyError" xml:space="preserve">
+    <value>生成 SSH 密钥失败：{0}</value>
   </data>
   <data name="SSHKeyNameTextBox.Header" xml:space="preserve">
     <value>密钥名称</value>
