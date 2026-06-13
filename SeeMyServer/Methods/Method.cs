@@ -1135,8 +1135,8 @@ namespace SeeMyServer.Methods
                         {
                             mountInfo.SectorsRead = correspondingStatus.SectorsRead;
                             mountInfo.SectorsWritten = correspondingStatus.SectorsWritten;
-                            mountInfo.SectorsReadBytes = $"{NetUnitConversion(correspondingStatus.SectorsRead)}";
-                            mountInfo.SectorsWrittenBytes = $"{NetUnitConversion(correspondingStatus.SectorsWritten)}";
+                            mountInfo.SectorsReadBytes = $"{NetUnitConversion(correspondingStatus.SectorsRead * 512m)}";
+                            mountInfo.SectorsWrittenBytes = $"{NetUnitConversion(correspondingStatus.SectorsWritten * 512m)}";
                             mountInfo.SectorsReadPerSecondOrigin = correspondingStatus.SectorsReadPerSecondOrigin;
                             mountInfo.SectorsWrittenPerSecondOrigin = correspondingStatus.SectorsWrittenPerSecondOrigin;
                             mountInfo.SectorsReadPerSecond = correspondingStatus.SectorsReadPerSecond;
@@ -1196,16 +1196,18 @@ namespace SeeMyServer.Methods
                 {
                     decimal sectorsReadSpeed = (dstatus2.SectorsRead - dstatus1.SectorsRead) * 1000 / elapsedTime;
                     decimal sectorsWrittenSpeed = (dstatus2.SectorsWritten - dstatus1.SectorsWritten) * 1000 / elapsedTime;
+                    decimal readBytesPerSecond = sectorsReadSpeed * 512;
+                    decimal writeBytesPerSecond = sectorsWrittenSpeed * 512;
 
                     diskStatusInfos.Add(new MountInfo
                     {
                         FileSystem = dstatus2.FileSystem,
                         SectorsRead = dstatus2.SectorsRead,
                         SectorsWritten = dstatus2.SectorsWritten,
-                        SectorsReadPerSecondOrigin = sectorsReadSpeed,
-                        SectorsWrittenPerSecondOrigin = sectorsWrittenSpeed,
-                        SectorsReadPerSecond = $"{NetUnitConversion(sectorsReadSpeed)}/s R",
-                        SectorsWrittenPerSecond = $"{NetUnitConversion(sectorsWrittenSpeed)}/s W",
+                        SectorsReadPerSecondOrigin = readBytesPerSecond,
+                        SectorsWrittenPerSecondOrigin = writeBytesPerSecond,
+                        SectorsReadPerSecond = $"{NetUnitConversion(readBytesPerSecond)}/s R",
+                        SectorsWrittenPerSecond = $"{NetUnitConversion(writeBytesPerSecond)}/s W",
                     });
                 }
             }
@@ -1260,9 +1262,8 @@ namespace SeeMyServer.Methods
                     continue;
 
                 var interfaceName = parts[0].Trim();
-                var values = parts[1].Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)
-                    .Select(long.Parse)
-                    .ToArray();
+                var tokens = parts[1].Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                var values = tokens.Select(long.Parse).ToArray();
 
                 var info = new NetworkInterfaceInfo
                 {

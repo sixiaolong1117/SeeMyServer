@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,12 +10,12 @@ namespace SeeMyServer.Models
     {
         public string Interface { get; set; }
         public string ReceiveBytes { get; set; }
-        public long ReceiveBytesOrigin { get; set; }
+        public decimal ReceiveBytesOrigin { get; set; }
         public string ReceivePackets { get; set; }
         public decimal ReceiveSpeedByte { get; set; }
         public string ReceiveSpeed { get; set; }
         public string TransmitBytes { get; set; }
-        public long TransmitBytesOrigin { get; set; }
+        public decimal TransmitBytesOrigin { get; set; }
         public string TransmitPackets { get; set; }
         public decimal TransmitSpeedByte { get; set; }
         public string TransmitSpeed { get; set; }
