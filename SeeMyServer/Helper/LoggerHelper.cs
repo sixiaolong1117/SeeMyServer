@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.IO;
 using System.Threading;
@@ -8,6 +8,9 @@ namespace SeeMyServer.Helper
 {
     public class Logger : IDisposable
     {
+        private static readonly Lazy<Logger> _instance = new Lazy<Logger>(() => new Logger(1));
+        public static Logger Instance => _instance.Value;
+
         private string logFilePath;
         private int maxLogSize;
         private ConcurrentQueue<string> logQueue = new ConcurrentQueue<string>();
@@ -15,7 +18,7 @@ namespace SeeMyServer.Helper
         private CancellationTokenSource cts = new CancellationTokenSource();
         private bool disposed = false;
 
-        public Logger(int maxFileSizeMB)
+        private Logger(int maxFileSizeMB)
         {
             string userFolderPath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
             string logFolder = Path.Combine(userFolderPath, ".cmslogs");
@@ -137,6 +140,14 @@ namespace SeeMyServer.Helper
             else
             {
                 Console.WriteLine("Log file directory does not exist.");
+            }
+        }
+
+        public static void Shutdown()
+        {
+            if (_instance.IsValueCreated)
+            {
+                _instance.Value.Dispose();
             }
         }
 

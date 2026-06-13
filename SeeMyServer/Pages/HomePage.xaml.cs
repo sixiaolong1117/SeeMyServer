@@ -37,7 +37,6 @@ namespace SeeMyServer.Pages
         ResourceLoader resourceLoader = new ResourceLoader();
         private Microsoft.UI.Dispatching.DispatcherQueue _dispatcherQueue;
         private DispatcherTimer timer;
-        private Logger logger;
 
         public HomePage()
         {
@@ -45,9 +44,6 @@ namespace SeeMyServer.Pages
 
             this.Loaded += Page_Loaded;
             this.Unloaded += Page_Unloaded;
-
-            // 设置日志，最大1MB
-            logger = new Logger(1);
 
             // 获取UI线程的DispatcherQueue
             _dispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();
@@ -142,40 +138,40 @@ namespace SeeMyServer.Pages
             switch (e.Action)
             {
                 case NotifyCollectionChangedAction.Add:
-                    logger.LogInfo("Items added:");
+                    Logger.Instance.LogInfo("Items added:");
                     foreach (var item in e.NewItems)
                     {
-                        logger.LogInfo($"Id: {(item as CMSModel).Id}, Name: {(item as CMSModel).Name}");
+                        Logger.Instance.LogInfo($"Id: {(item as CMSModel).Id}, Name: {(item as CMSModel).Name}");
                     }
-                    logger.LogInfo(idsString);
+                    Logger.Instance.LogInfo(idsString);
                     break;
                 case NotifyCollectionChangedAction.Remove:
-                    logger.LogInfo("Items removed:");
+                    Logger.Instance.LogInfo("Items removed:");
                     foreach (var item in e.OldItems)
                     {
-                        logger.LogInfo($"Id: {(item as CMSModel).Id}, Name: {(item as CMSModel).Name}");
+                        Logger.Instance.LogInfo($"Id: {(item as CMSModel).Id}, Name: {(item as CMSModel).Name}");
                     }
-                    logger.LogInfo(idsString);
+                    Logger.Instance.LogInfo(idsString);
                     break;
                 case NotifyCollectionChangedAction.Replace:
-                    logger.LogInfo("Items replaced:");
+                    Logger.Instance.LogInfo("Items replaced:");
                     foreach (var newItem in e.NewItems)
                     {
-                        logger.LogInfo($"New Id: {(newItem as CMSModel).Id}, New Name: {(newItem as CMSModel).Name}");
+                        Logger.Instance.LogInfo($"New Id: {(newItem as CMSModel).Id}, New Name: {(newItem as CMSModel).Name}");
                     }
                     foreach (var oldItem in e.OldItems)
                     {
-                        logger.LogInfo($"Old Id: {(oldItem as CMSModel).Id}, Old Name: {(oldItem as CMSModel).Name}");
+                        Logger.Instance.LogInfo($"Old Id: {(oldItem as CMSModel).Id}, Old Name: {(oldItem as CMSModel).Name}");
                     }
-                    logger.LogInfo(idsString);
+                    Logger.Instance.LogInfo(idsString);
                     break;
                 case NotifyCollectionChangedAction.Reset:
-                    logger.LogInfo("Collection reset.");
-                    logger.LogInfo(idsString);
+                    Logger.Instance.LogInfo("Collection reset.");
+                    Logger.Instance.LogInfo(idsString);
                     break;
                 case NotifyCollectionChangedAction.Move:
-                    logger.LogInfo($"Item moved from index {e.OldStartingIndex} to index {e.NewStartingIndex}.");
-                    logger.LogInfo(idsString);
+                    Logger.Instance.LogInfo($"Item moved from index {e.OldStartingIndex} to index {e.NewStartingIndex}.");
+                    Logger.Instance.LogInfo(idsString);
                     break;
                 default:
                     break;
@@ -319,7 +315,7 @@ namespace SeeMyServer.Pages
             if (Usages.Result != null)
             {
                 cmsModel.NumberOfFailures = 0;
-                Method.UpdateCMSModelFromUsageResult(cmsModel, Usages.Result, logger);
+                Method.UpdateCMSModelFromUsageResult(cmsModel, Usages.Result);
             }
             else
             {
@@ -395,7 +391,7 @@ namespace SeeMyServer.Pages
                 // 加载数据
                 initialCMSModelData.Id = id;
                 AddItem(initialCMSModelData);
-                logger.LogInfo("Add Config is completed.");
+                Logger.Instance.LogInfo("Add Config is completed.");
             }
         }
 
@@ -448,7 +444,7 @@ namespace SeeMyServer.Pages
                 //LoadData();
                 cmsModel.Id = id;
                 AddItem(cmsModel);
-                logger.LogInfo("Import Config is completed.");
+                Logger.Instance.LogInfo("Import Config is completed.");
             }
             HomePageImportConfig.IsEnabled = true;
         }
@@ -471,7 +467,7 @@ namespace SeeMyServer.Pages
                 // 重新加载数据
                 //LoadData();
                 RefreshListView();
-                logger.LogInfo("Edit Config is completed.");
+                Logger.Instance.LogInfo("Edit Config is completed.");
             }
         }
         private void ConfirmDelete_Click(object sender, RoutedEventArgs e)
@@ -487,7 +483,7 @@ namespace SeeMyServer.Pages
             // 重新加载数据
             //LoadData();
             RemoveItem(selectedModel);
-            logger.LogInfo("Delete Config is completed.");
+            Logger.Instance.LogInfo("Delete Config is completed.");
         }
         private void CancelDelete_Click(object sender, RoutedEventArgs e)
         {

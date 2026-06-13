@@ -16,7 +16,6 @@ namespace SeeMyServer.Pages
     {
         ResourceLoader resourceLoader = new ResourceLoader();
         private DispatcherTimer timer;
-        private Logger logger;
         CMSModel dataList;
 
         private enum SortColumn { None, PID, Command, CPU, MEM, Time, Status }
@@ -37,8 +36,6 @@ namespace SeeMyServer.Pages
 
             this.Loaded += Page_Loaded;
             this.Unloaded += Page_Unloaded;
-
-            logger = new Logger(1);
         }
 
         private void Page_Loaded(object sender, RoutedEventArgs e)
@@ -100,7 +97,7 @@ namespace SeeMyServer.Pages
 
             if (Usages.Result != null)
             {
-                Method.UpdateCMSModelFromUsageResult(cmsModel, Usages.Result, logger);
+                Method.UpdateCMSModelFromUsageResult(cmsModel, Usages.Result);
             }
             else
             {

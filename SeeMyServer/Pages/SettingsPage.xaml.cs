@@ -1,4 +1,4 @@
-﻿using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System;
 using System.Collections.Generic;
@@ -214,14 +214,12 @@ namespace SeeMyServer.Pages
 
         private void OpenLogFolderButton_Click(object sender, RoutedEventArgs e)
         {
-            Logger logger = new Logger(1);
-            logger.OpenLogFileDirectory();
+            Logger.Instance.OpenLogFileDirectory();
         }
 
         private void ClearLogButton_Click(object sender, RoutedEventArgs e)
         {
-            Logger logger = new Logger(1);
-            logger.ClearLog();
+            Logger.Instance.ClearLog();
         }
 
         private void WindowsHelloStatusSet()

@@ -1,4 +1,4 @@
-﻿using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using SeeMyServer.Datas;
 using SeeMyServer.Helper;
@@ -23,13 +23,9 @@ namespace SeeMyServer.Pages.Dialogs
         public string PendingPlainPassword { get; private set; }
         private readonly ResourceLoader resourceLoader = ResourceLoader.GetForViewIndependentUse();
         private List<SSHKeyModel> sshKeys = new List<SSHKeyModel>();
-        private Logger logger;
         public AddServer(CMSModel cmsModel, string pendingPlainPassword = null)
         {
             this.InitializeComponent();
-
-            // 设置日志，最大1MB
-            logger = new Logger(1);
 
             // 将Dialog两个按钮点击事件绑定
             PrimaryButtonClick += MyDialog_PrimaryButtonClick;
@@ -57,7 +53,7 @@ namespace SeeMyServer.Pages.Dialogs
             {
                 SSHPasswd.PlaceholderText = "<Not Changed>";
             }
-            logger.LogInfo("Dialog field initialization completed.");
+            Logger.Instance.LogInfo("Dialog field initialization completed.");
 
             // 加载SSH密钥列表
             LoadSSHKeys(GetConfiguredSSHKeyId(cmsModel));
@@ -120,7 +116,7 @@ namespace SeeMyServer.Pages.Dialogs
                 SSHKeyTips.Visibility = Visibility.Collapsed;
                 SSHPasswdTips.Visibility = Visibility.Visible;
             }
-            logger.LogInfo("PrivateKeyIsOpen() completed.");
+            Logger.Instance.LogInfo("PrivateKeyIsOpen() completed.");
         }
 
         private async void ImportSSHKey_Click(object sender, RoutedEventArgs e)

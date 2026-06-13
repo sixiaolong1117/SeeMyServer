@@ -30,8 +30,6 @@ namespace SeeMyServer.Methods
 {
     public class Method
     {
-        // 设置日志，最大1MB
-        private static Logger logger = new Logger(1);
         public static string[] SendSSHCommands(string[] sshCommands, CMSModel cmsModel, string passwd)
         {
             try
@@ -39,7 +37,7 @@ namespace SeeMyServer.Methods
                 int port;
                 if (!int.TryParse(cmsModel.HostPort, out port))
                 {
-                    logger.LogError($"{cmsModel.HostIP}:{cmsModel.HostPort} Invalid SSH port number used: {cmsModel.HostPort}");
+                    Logger.Instance.LogError($"{cmsModel.HostIP}:{cmsModel.HostPort} Invalid SSH port number used: {cmsModel.HostPort}");
                     return null;
                 }
 
@@ -51,7 +49,7 @@ namespace SeeMyServer.Methods
                 {
                     if (sshClient == null)
                     {
-                        logger.LogError($"{cmsModel.HostIP}:{cmsModel.HostPort} SSH client initialization failed.");
+                        Logger.Instance.LogError($"{cmsModel.HostIP}:{cmsModel.HostPort} SSH client initialization failed.");
                         return null;
                     }
 
@@ -60,7 +58,7 @@ namespace SeeMyServer.Methods
             }
             catch (Exception ex)
             {
-                logger.LogError($"{cmsModel.HostIP}:{cmsModel.HostPort} SSH operation failed: " + ex.Message);
+                Logger.Instance.LogError($"{cmsModel.HostIP}:{cmsModel.HostPort} SSH operation failed: " + ex.Message);
                 return null;
             }
         }
@@ -88,7 +86,7 @@ namespace SeeMyServer.Methods
             }
             catch (Exception ex)
             {
-                logger.LogError($"{sshHost}:{sshPort} SSH 连接失败：" + ex.Message);
+                Logger.Instance.LogError($"{sshHost}:{sshPort} SSH 连接失败：" + ex.Message);
                 return null;
             }
         }
@@ -141,7 +139,7 @@ namespace SeeMyServer.Methods
                         if (!string.IsNullOrEmpty(SSHCommand.Error))
                         {
                             results.Add($"[CMSError]: {host}:{port} executing command \"{sshCommand}\": {SSHCommand.Error}");
-                            logger.LogError($"[CMSError]: {host}:{port} executing command \"{sshCommand}\": {SSHCommand.Error}");
+                            Logger.Instance.LogError($"[CMSError]: {host}:{port} executing command \"{sshCommand}\": {SSHCommand.Error}");
                         }
                         else
                         {
@@ -151,7 +149,7 @@ namespace SeeMyServer.Methods
                 }
                 else
                 {
-                    logger.LogError($"{host}:{port} SSH connection failed.");
+                    Logger.Instance.LogError($"{host}:{port} SSH connection failed.");
                     results.Add($"{host}:{port} SSH connection failed.");
                 }
             }
@@ -176,7 +174,7 @@ namespace SeeMyServer.Methods
 
             if (string.IsNullOrEmpty(key) || string.IsNullOrEmpty(iv))
             {
-                logger.LogError($"{cmsModel.HostIP}:{cmsModel.HostPort} The key and/or initialization vector do not exist.");
+                Logger.Instance.LogError($"{cmsModel.HostIP}:{cmsModel.HostPort} The key and/or initialization vector do not exist.");
                 return "";
             }
 
@@ -196,19 +194,19 @@ namespace SeeMyServer.Methods
             {
                 if (!string.IsNullOrEmpty(cmsModel.SSHPasswd))
                 {
-                    logger.LogInfo($"{cmsModel.HostIP}:{cmsModel.HostPort} SSH using Password.");
+                    Logger.Instance.LogInfo($"{cmsModel.HostIP}:{cmsModel.HostPort} SSH using Password.");
                     passwd = DecryptSSHPassword(cmsModel);
                 }
             }
             // 打开Key认证
             else if (cmsModel.SSHKeyIsOpen == "True")
             {
-                logger.LogInfo($"{cmsModel.HostIP}:{cmsModel.HostPort} SSH using Key authentication.");
+                Logger.Instance.LogInfo($"{cmsModel.HostIP}:{cmsModel.HostPort} SSH using Key authentication.");
             }
             // 其余情况
             else
             {
-                logger.LogError($"{cmsModel.HostIP}:{cmsModel.HostPort} Unknown SSH login solution.");
+                Logger.Instance.LogError($"{cmsModel.HostIP}:{cmsModel.HostPort} Unknown SSH login solution.");
             }
             // 异步执行命令
             return await Task.Run(() =>
@@ -249,7 +247,7 @@ namespace SeeMyServer.Methods
                 catch
                 {
                     // 当您保存至OneDrive等同步盘目录时，在Windows11上可能引起DeferUpdates错误，备份文件不一定写入正确。
-                    logger.LogWarning($"{cmsModel.Name} 保存行为完成，但当您保存至OneDrive等同步盘目录时，在Windows11上可能引起DeferUpdates错误，备份文件不一定写入正确。");
+                    Logger.Instance.LogWarning($"{cmsModel.Name} 保存行为完成，但当您保存至OneDrive等同步盘目录时，在Windows11上可能引起DeferUpdates错误，备份文件不一定写入正确。");
                     return "保存行为完成，但当您保存至OneDrive等同步盘目录时，在Windows11上可能引起DeferUpdates错误，备份文件不一定写入正确。";
                 }
 
@@ -279,23 +277,23 @@ namespace SeeMyServer.Methods
                 if (status == FileUpdateStatus.Complete)
                 {
                     // 保存成功
-                    logger.LogInfo($"{cmsModel.Name} 保存成功");
+                    Logger.Instance.LogInfo($"{cmsModel.Name} 保存成功");
                     return $"{cmsModel.Name} 保存成功";
                 }
                 else if (status == FileUpdateStatus.CompleteAndRenamed)
                 {
                     // 重命名并保存成功
-                    logger.LogInfo($"{cmsModel.Name} 重命名并保存成功");
+                    Logger.Instance.LogInfo($"{cmsModel.Name} 重命名并保存成功");
                     return $"{cmsModel.Name} 重命名并保存成功";
                 }
                 else
                 {
                     // 文件无法保存！
-                    logger.LogError($"{cmsModel.Name} 无法保存！");
+                    Logger.Instance.LogError($"{cmsModel.Name} 无法保存！");
                     return $"{cmsModel.Name} 无法保存！";
                 }
             }
-            logger.LogError($"{cmsModel.Name} 错误！");
+            Logger.Instance.LogError($"{cmsModel.Name} 错误！");
             return $"{cmsModel.Name} 错误！";
         }
         // 导入配置
@@ -497,7 +495,7 @@ namespace SeeMyServer.Methods
                 }
                 else
                 {
-                    logger.LogError("MEMUsagesRev pattern match failed.");
+                    Logger.Instance.LogError("MEMUsagesRev pattern match failed.");
                 }
             }
 
@@ -627,7 +625,7 @@ namespace SeeMyServer.Methods
             // OpenWRT单独适配
             if (TopRev.StartsWith("Mem"))
             {
-                logger.LogInfo("Load average (OpenWRT).");
+                Logger.Instance.LogInfo("Load average (OpenWRT).");
                 // 使用正则取出负载信息
                 Regex loadRegex = new Regex(@"Load average: (\d+\.\d+) (\d+\.\d+) (\d+\.\d+) (\d+)/(\d+) (\d+)");
 
@@ -653,7 +651,7 @@ namespace SeeMyServer.Methods
                 catch (Exception ex)
                 {
                     //double.Parse(CPUCoreRes)失败
-                    logger.LogError(ex.Message);
+                    Logger.Instance.LogError(ex.Message);
                 }
             }
             // 负载信息
@@ -684,7 +682,7 @@ namespace SeeMyServer.Methods
                 catch (Exception ex)
                 {
                     //double.Parse(CPUCoreRes)失败
-                    logger.LogError(ex.Message);
+                    Logger.Instance.LogError(ex.Message);
                 }
             }
             // 将结果添加到 List<string> 中
@@ -713,7 +711,7 @@ namespace SeeMyServer.Methods
             }
             else
             {
-                logger.LogError("HostName acquisition failed, try to use 'uci get system.@system[0].hostname'.");
+                Logger.Instance.LogError("HostName acquisition failed, try to use 'uci get system.@system[0].hostname'.");
                 string[] CMD = new string[]
                 {
                 "uci get system.@system[0].hostname"
@@ -724,7 +722,7 @@ namespace SeeMyServer.Methods
                 if (HostnameRev != "" && HostnameRev != null && !HostnameRev.StartsWith("[CMSError]:"))
                 {
                     aboutInfo.Add(HostnameRev.Split('\n')[0]);
-                    logger.LogError("HostName acquisition failed.");
+                    Logger.Instance.LogError("HostName acquisition failed.");
                 }
                 else
                 {
@@ -743,7 +741,7 @@ namespace SeeMyServer.Methods
             {
                 // 检索不到系统版本
                 aboutInfo.Add("");
-                logger.LogError("OSRelease acquisition failed.");
+                Logger.Instance.LogError("OSRelease acquisition failed.");
             }
             // top
             aboutInfo.Add(TopRev);
@@ -849,8 +847,8 @@ namespace SeeMyServer.Methods
                     }
                     else
                     {
-                        logger.LogError("The number of elements in the SSH result array is incorrect.");
-                        logger.LogError(string.Join("\n\n", result));
+                        Logger.Instance.LogError("The number of elements in the SSH result array is incorrect.");
+                        Logger.Instance.LogError(string.Join("\n\n", result));
                     }
 
                     return Tuple.Create(cpuUsageList, parsedResults, networkInterfaceInfos, mountInfos, aboutInfo, loadResults);
@@ -860,7 +858,7 @@ namespace SeeMyServer.Methods
                     // 停止计时
                     stopwatch.Stop();
 
-                    logger.LogError("SSH results array is null.");
+                    Logger.Instance.LogError("SSH results array is null.");
                     return null;
                 }
             }
@@ -877,8 +875,7 @@ namespace SeeMyServer.Methods
         /// </summary>
         public static void UpdateCMSModelFromUsageResult(
             CMSModel cmsModel,
-            Tuple<List<List<string>>, List<string>, List<NetworkInterfaceInfo>, List<List<MountInfo>>, List<string>, List<string>> Usages,
-            Logger logger)
+            Tuple<List<List<string>>, List<string>, List<NetworkInterfaceInfo>, List<List<MountInfo>>, List<string>, List<string>> Usages)
         {
             if (Usages == null) return;
 
@@ -938,7 +935,7 @@ namespace SeeMyServer.Methods
             }
             catch (Exception ex)
             {
-                logger?.LogError($"TOP parse failed: {ex.Message}");
+                Logger.Instance.LogError($"TOP parse failed: {ex.Message}");
             }
 
             // 处理CPU数据
@@ -953,7 +950,7 @@ namespace SeeMyServer.Methods
             }
             catch (Exception ex)
             {
-                logger?.LogError($"CPU data update failed: {ex.Message}");
+                Logger.Instance.LogError($"CPU data update failed: {ex.Message}");
             }
 
             // 负载信息 - 获取结果失败不更新
@@ -985,7 +982,7 @@ namespace SeeMyServer.Methods
             }
             catch (Exception ex)
             {
-                logger?.LogError($"MEM data update failed: {ex.Message}");
+                Logger.Instance.LogError($"MEM data update failed: {ex.Message}");
             }
 
             // Swap数据
@@ -1012,7 +1009,7 @@ namespace SeeMyServer.Methods
             }
             catch (Exception ex)
             {
-                logger?.LogError($"Swap data update failed: {ex.Message}");
+                Logger.Instance.LogError($"Swap data update failed: {ex.Message}");
             }
 
             // 总内存/总Swap
@@ -1023,7 +1020,7 @@ namespace SeeMyServer.Methods
             }
             catch (Exception ex)
             {
-                logger?.LogError($"Total MEM/Swap update failed: {ex.Message}");
+                Logger.Instance.LogError($"Total MEM/Swap update failed: {ex.Message}");
             }
 
             // CPU核心令牌
@@ -1033,7 +1030,7 @@ namespace SeeMyServer.Methods
             }
             catch (Exception ex)
             {
-                logger?.LogError($"CPUCoreTokens update failed: {ex.Message}");
+                Logger.Instance.LogError($"CPUCoreTokens update failed: {ex.Message}");
             }
 
             // 挂载和网络信息
@@ -1148,14 +1145,14 @@ namespace SeeMyServer.Methods
                         else
                         {
                             // Log an error if corresponding status not found
-                            //logger.LogError($"Corresponding status not found for FileSystem: {mountInfo.FileSystem}");
+                            //Logger.Instance.LogError($"Corresponding status not found for FileSystem: {mountInfo.FileSystem}");
                         }
 
                         mountInfos.Add(mountInfo);
                     }
                     else
                     {
-                        //logger.LogError($"Invalid line format: {line}");
+                        //Logger.Instance.LogError($"Invalid line format: {line}");
                     }
                 }
             }

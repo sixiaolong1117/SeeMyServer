@@ -19,15 +19,9 @@ namespace SeeMyServer
         // 私有的 m_window，用于引用 MainWindow 实例
         public static MainWindow m_window;
 
-        // 日志记录器
-        private Logger logger;
-
         public App()
         {
             this.InitializeComponent();
-
-            // 设置日志，最大1MB
-            logger = new Logger(1);
         }
 
         protected override async void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
@@ -71,7 +65,7 @@ namespace SeeMyServer
             // SetWindowSize(hwnd, 1110, 800);
 
             // 记录启动日志
-            logger.LogInfo("ServerDash starts.");
+            Logger.Instance.LogInfo("ServerDash starts.");
 
             // 清理遗留的临时私钥文件
             Method.CleanupTempSSHKeys();

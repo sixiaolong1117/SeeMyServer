@@ -33,7 +33,6 @@ namespace SeeMyServer.Pages
         ApplicationDataContainer localSettings = ApplicationData.Current.LocalSettings;
         ResourceLoader resourceLoader = new ResourceLoader();
         private DispatcherTimer timer;
-        private Logger logger;
         CMSModel dataList;
 
         public DetailPage()
@@ -50,9 +49,6 @@ namespace SeeMyServer.Pages
 
             this.Loaded += Page_Loaded;
             this.Unloaded += Page_Unloaded;
-
-            // 设置日志，最大1MB
-            logger = new Logger(1);
         }
 
         private List<ProgressBar> CreateProgressBars(Grid container, string[] CPUCoreUsageTokens, string CPUCoreNum)
@@ -164,7 +160,7 @@ namespace SeeMyServer.Pages
                     }
                 }
             }
-            catch (Exception ex) { logger.LogError($"LoadData CPUCoreTokens check failed: {ex.Message}"); }
+            catch (Exception ex) { Logger.Instance.LogError($"LoadData CPUCoreTokens check failed: {ex.Message}"); }
 
             try
             {
@@ -277,7 +273,7 @@ namespace SeeMyServer.Pages
 
             if (Usages.Result != null)
             {
-                Method.UpdateCMSModelFromUsageResult(cmsModel, Usages.Result, logger);
+                Method.UpdateCMSModelFromUsageResult(cmsModel, Usages.Result);
             }
             else
             {
@@ -415,7 +411,7 @@ namespace SeeMyServer.Pages
                 // 去掉绑定
                 MountInfosListView.ItemsSource = null;
                 NetworkInfosListView.ItemsSource = null;
-                logger.LogInfo("Edit Config is completed.");
+                Logger.Instance.LogInfo("Edit Config is completed.");
             }
         }
 
